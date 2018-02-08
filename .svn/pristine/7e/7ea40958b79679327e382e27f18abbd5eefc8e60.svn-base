@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html">
+
+
+<h:head>
+	<link rel="stylesheet" type="text/css" href="css/plataforma.css" />
+	<link rel="stylesheet" type="text/css" href="css/changelog.css" />
+
+</h:head>
+
+<h:body>
+	<div style="width: 40px; float: left">
+		<h:form id="formMenu">
+			<a href="index.xhtml"> <p:graphicImage value="./images/home.png"
+					width="30px" style="padding-left:10px" />
+			</a>
+		</h:form>
+	</div>
+
+	<div style="padding: 0px 50px 0px 50px;">
+		<h:form id="formPrincipal">
+
+			<p:growl id="message" showDetail="true" />
+
+			<div style="height: 50px">
+				<p:panelGrid id="panelSelect" columns="5">
+					<h:outputText value="Sistema" />
+					<p:selectOneMenu value="#{versaoBean.btpSistema}" immediate="true"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="TODOS" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+							itemValue="#{sistema}" value="#{versaoBean.lstSistemas}" />
+						<f:attribute name="itens" value="#{versaoBean.lstSistemas}" />
+						<p:ajax update="tableLst" />
+					</p:selectOneMenu>
+				</p:panelGrid>
+
+			</div>
+
+			<p:dataTable var="versao" value="#{versaoBean.versaoListChamado}"
+				style="margin-top:10px" id="tableLst" emptyMessage="Nenhuma versão lançada.">
+				<p:column style="vertical-align: top; width:200px;">
+					<br />
+					<table border="none">
+						<tr>
+							<td style="vertical-align: top;">
+								<div>
+									<h:outputText class="versao${versao.tipoVersao.valor}"
+										value="#{versao.btpSistema.sisDscSigla.toString().toUpperCase()} " />
+									<h:outputText class="versao${versao.tipoVersao.valor}"									
+										value="#{versao.verIdVersao}" />
+									<h:outputText class="versao${versao.tipoVersao.valor}"
+										value=" #{versao.verDscCompl}" />
+								</div>
+								<div class="data_hora_versao">
+									<h:outputText value="#{versao.verDtaIniPublic}">
+										<f:convertDateTime pattern="dd/MM/YYYY HH:mm:ss"
+											timeZone="GMT-3" />
+									</h:outputText>
+									<br /> <br />
+
+								</div> <p:commandLink title="ChangeLog"
+									actionListener="#{versaoBean.downloadChangeLog(versao)}"
+									ajax="false">
+									<p:graphicImage value="./images/changelog.jpeg" width="27px"
+										style="padding-left:0px" />
+									<f:setPropertyActionListener target="#{versaoBean.btpVersao}"
+										value="#{versao}" />
+								</p:commandLink>
+							</td>
+						</tr>
+					</table>
+				</p:column>
+				<p:column>
+					<p:column
+						rendered="#{versaoBean.listarDemandas(versao, 0).size()>0}">
+						<div style="margin-top: 10px; height: 30px;">
+							<p:graphicImage value="./images/td_new.png" width="15px" />
+							<h:outputText value="NOVAS IMPLEMENTAÇÕES "
+								styleClass="tituloLog" style="padding-left:10px;" />
+						</div>
+					</p:column>
+
+					<p:dataTable var="demanda" style="margin-top:5px;" emptyMessage=""
+						rendered="#{versaoBean.listarDemandas(versao, 0).size()>0}"
+						value="#{versaoBean.listarDemandas(versao,0)}">
+						<p:column style="padding-left:15px;">
+							<h:outputText value=" - #{demanda.demDscChamado} "
+								style="white-space:normal; text-align:justify;" />
+						</p:column>
+					</p:dataTable>
+
+					<p:column
+						rendered="#{versaoBean.listarDemandas(versao, 1).size()>0}">
+						<div style="margin-top: 10px; height: 30px;">
+							<p:graphicImage value="./images/td_correcoes.png" width="15px" />
+							<h:outputText value="CORREÇÃO ESPECÍFICA" styleClass="tituloLog"
+								style="padding-left:10px;" />
+						</div>
+					</p:column>
+
+					<p:dataTable var="demanda"
+						rendered="#{versaoBean.listarDemandas(versao, 1).size()>0}"
+						value="#{versaoBean.listarDemandas(versao,1)}">
+
+						<p:column style="padding-left:15px;">
+							<h:outputText value=" - #{demanda.demDscChamado} "
+								style="white-space:normal; text-align:justify;" />
+						</p:column>
+					</p:dataTable>
+
+
+					<p:column
+						rendered="#{versaoBean.listarDemandas(versao, 2).size()>0}">
+						<div style="margin-top: 10px; height: 30px;">
+							<p:graphicImage value="./images/td_bug.jpg" width="15px" />
+							<h:outputText value="BUG" styleClass="tituloLog"
+								style="padding-left:10px;" />
+						</div>
+					</p:column>
+
+					<p:dataTable var="demanda"
+						rendered="#{versaoBean.listarDemandas(versao, 2).size()>0}"
+						value="#{versaoBean.listarDemandas(versao,2)}">
+
+						<p:column style="padding-left:15px;">
+							<h:outputText value=" - #{demanda.demDscChamado} "
+								style="white-space:normal; text-align:justify;" />
+						</p:column>
+					</p:dataTable>
+
+					<p:column
+						rendered="#{versaoBean.listarDemandas(versao, 3).size()>0}">
+						<div style="margin-top: 10px; height: 30px;">
+							<p:graphicImage value="./images/td_performance.png" width="15px" />
+							<h:outputText value="MELHORIA DE PEFORMANCE"
+								styleClass="tituloLog" style="padding-left:10px;" />
+						</div>
+					</p:column>
+
+
+					<p:dataTable var="demanda"
+						rendered="#{versaoBean.listarDemandas(versao, 3).size()>0}"
+						value="#{versaoBean.listarDemandas(versao,3)}">
+
+						<p:column style="padding-left:15px;">
+							<h:outputText value=" - #{demanda.demDscChamado} "
+								style="white-space:normal; text-align:justify;" />
+						</p:column>
+					</p:dataTable>
+
+
+
+					<p:column
+						rendered="#{versaoBean.listarDemandas(versao, 4).size()>0}">
+						<div style="margin-top: 10px; height: 30px;">
+							<p:graphicImage value="./images/td_design.png" width="15px" />
+							<h:outputText value="MELHORIA DE DESIGN" styleClass="tituloLog"
+								style="padding-left:10px;" />
+						</div>
+
+					</p:column>
+
+					<p:dataTable var="demanda"
+						rendered="#{versaoBean.listarDemandas(versao, 4).size()>0}"
+						value="#{versaoBean.listarDemandas(versao,4)}">
+						<p:column style="padding-left:15px;">
+							<h:outputText value=" - #{demanda.demDscChamado} "
+								style="white-space:normal; text-align:justify;" />
+						</p:column>
+					</p:dataTable>
+
+					<p:column>
+						<div style="height: 10px;" />
+					</p:column>
+
+				</p:column>
+
+			</p:dataTable>
+		</h:form>
+
+
+
+
+	</div>
+</h:body>
+
+</html>

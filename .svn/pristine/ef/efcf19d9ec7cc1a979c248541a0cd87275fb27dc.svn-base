@@ -1,0 +1,17 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Parallel test runs" parallel="classes" thread-count="1">
+
+	<!-- 78 CASOS DE TESTES -->
+	<test name="THREAD_SERVICOS_ESPECIAIS" parallel="methods"
+		thread-count="1">
+		<packages>
+			<package name="br.com.cagece.prax.automatizacao.srv351" />
+		</packages>
+	</test>
+
+</suite>
+
+
+
+

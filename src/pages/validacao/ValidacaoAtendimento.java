@@ -1,0 +1,837 @@
+package pages.validacao;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.mail.MessagingException;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+
+import pages.AtendimentoPage;
+import pages.MenuPage;
+import servicos.ServicoPadrao;
+import auxiliares.Atendimento;
+import auxiliares.BaseVars;
+import auxiliares.ConnectJDBC;
+import auxiliares.DataUtil;
+import auxiliares.DriverUtils;
+import auxiliares.Util;
+import enumerators.EnumServico;
+import enumerators.EnumServidorTeste;
+import enumerators.EnumSituacaoRede;
+import enumerators.EnumTipoErro;
+import enumerators.EnumTipoLigacao;
+import enumerators.EnumTipoPadrao;
+import enumerators.EnumTipoPagamento;
+import enumerators.EnumTipoProduto;
+import frames.FramePrincipalPage;
+
+public class ValidacaoAtendimento
+{
+	/**************** CONSTANTES DE VALIDAÇÃO ********************************************/
+
+	private static final String DATA_ATUAL = DataUtil
+			.converterDataFormatoddMMyyy(new Date());
+
+	@SuppressWarnings("unused")
+	private static final String STA_TRANSF_DEBITO_DEFERIDA = "DEFERIDA";
+
+	@SuppressWarnings("unused")
+	private static final String STA_LANC_PENDENTE = "Pendente";
+
+	private static final String STA_LANC_ATIVO = "Ativo";
+
+	private static final String MSG_VALIDACAO_TRANSF_MESMO_CONTRATO = "Não é permitido usar o mesmo cliente e imóvel associados ao contrato destino.";
+
+	@SuppressWarnings("unused")
+	private static final String MSG_CODIGO_BARRA_AUSENTE = "Código de barras ausente";
+
+	private static final String MSG_CODIGO_BARRA_PRESENTE = "Gerado código de barras";
+
+	private static final String STA_TIPO_LANC = "Débito";
+
+	private Double valorLaf = 0.0;
+
+	/*************************************************************************************/
+
+	private String parcelamento;
+
+	private Double totalDebitoContratoOrigem;
+
+	private Double totalDebitoContratoDestino;
+
+	private String valorServico;
+
+	private Double valorPgtoVista = 0.0;
+
+	private Double valorPgtoPrazo = 0.0;
+
+	public Double getValorLaf()
+	{
+		return valorLaf;
+	}
+
+	public void setValorLaf(Double valorLaf)
+	{
+		this.valorLaf = valorLaf;
+	}
+
+	public String getParcelamento()
+	{
+
+		return parcelamento;
+	}
+
+	public void setParcelamento(String parcelamento)
+	{
+
+		this.parcelamento = parcelamento;
+	}
+
+	public Double getValorPgtoPrazo()
+	{
+		return valorPgtoPrazo;
+	}
+
+	public void setValorPgtoPrazo(Double valorPgtoPrazo)
+	{
+		this.valorPgtoPrazo = valorPgtoPrazo;
+	}
+
+	public Double getValorPgtoVista()
+	{
+		return valorPgtoVista;
+	}
+
+	public void setValorPgtoVista(Double valorPgtoVista)
+	{
+		this.valorPgtoVista = valorPgtoVista;
+	}
+
+	private String credito;
+
+	public String getValorServico()
+	{
+		return valorServico;
+	}
+
+	public void setValorServico(String valorServico)
+	{
+		this.valorServico = valorServico;
+	}
+
+	public void setValorRealCobrar(Double valorRealCobrar)
+	{
+		this.valorPgtoVista = valorRealCobrar;
+	}
+
+	public String getCredito()
+	{
+		return credito;
+	}
+
+	public void setCredito(String credito)
+	{
+		this.credito = credito;
+	}
+
+	public Double getTotalDebitoContratoOrigem()
+	{
+		return totalDebitoContratoOrigem;
+	}
+
+	public void setTotalDebitoContratoOrigem(Double totalDebitoContratoOrigem)
+	{
+		this.totalDebitoContratoOrigem = totalDebitoContratoOrigem;
+	}
+
+	public Double getTotalDebitoContratoDestino()
+	{
+		return totalDebitoContratoDestino;
+	}
+
+	public void setTotalDebitoContratoDestino(Double totalDebitoContratoDestino)
+	{
+		this.totalDebitoContratoDestino = totalDebitoContratoDestino;
+	}
+
+	public void validarTipoPagamento(ServicoPadrao servico)
+			throws ClassNotFoundException, SQLException
+
+	{
+		if ( !(servico.getTiposPgtos().contains(EnumTipoPagamento.SEM_CUSTO) || servico
+				.getTiposPgtos().contains(EnumTipoPagamento.SEM_ONUS)) )
+		{
+
+			DriverUtils.iterarTelaPrincipal();
+
+			MenuPage.atendimentoCentralizado();
+
+			FramePrincipalPage.preencherInscricao(servico.getInscOrigem().toString(),
+					servico.getQtdContratoOrigem());
+
+			AtendimentoPage.exibirSituacaoFinanceira();
+
+			for (EnumTipoPagamento tipoPgto : servico.getTiposPgtos())
+			{
+
+				FramePrincipalPage.refresh();
+
+				DriverUtils.esperarPorAjax();
+
+				switch (tipoPgto)
+				{
+					case PARCELADO_COM_ENTRADA:
+
+						validarAVista();
+
+						validarLancamentoFuturo(servico.getInscOrigem(),
+								servico.getServicos(), servico.getItemLAF());
+
+						break;
+					case A_VISTA_PARCELADO:
+					case PARCELADO_SEM_ENTRADA:
+						if ( servico.isGeraLancamentoFuturo() )
+						{
+							validarLancamentoFuturo(servico.getInscOrigem(),
+									servico.getServicos(), servico.getItemLAF());
+						}
+						break;
+					case A_VISTA:
+
+						validarAVista();
+						break;
+
+					default:
+
+				}
+			}
+		}
+
+	}
+
+	public void verificarTransferenciaDebito(ServicoPadrao servico)
+	{
+
+		String totalDebitoDestino = Util.converterFormatoDoubleReal(servico
+				.getValidacao().getTotalDebitoContratoDestino());
+
+		FramePrincipalPage.preencherInscricao(servico.getInscDestino().toString(),
+				servico.getQtdContratosDestino());
+
+		DriverUtils.clicar(AtendimentoPage.btnTransferenciaDebitoCredito);
+
+		DriverUtils.esperarPorAjax();
+
+		WebDriverWait wait = new WebDriverWait(DriverUtils.getDriver(), 15);
+
+		wait.withMessage("Elemento no preenchimento do contrato não encontrado");
+
+		wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By
+				.xpath(".//*[@id='tblDetalharTransferenciaDebitoCredito']/table[2]/tbody/tr[*]/td[5]")));
+
+		boolean condicao = false;
+
+		int qtdLinhasTabela = 2;
+
+		for (WebElement valorTransferido : DriverUtils
+				.getDriver()
+				.findElements(
+						By.xpath(".//*[@id='tblDetalharTransferenciaDebitoCredito']/table[2]/tbody/tr[*]/td[6]")))
+		{
+
+			if ( DriverUtils
+					.getDriver()
+					.findElement(
+							By.xpath(".//*[@id='tblDetalharTransferenciaDebitoCredito']/table[2]/tbody/tr["
+									+ qtdLinhasTabela + "]/td[7]")).getText().equals(DATA_ATUAL)
+					&& valorTransferido.getText().equals(totalDebitoDestino) )
+			{
+				condicao = Boolean.TRUE;
+				break;
+			}
+			qtdLinhasTabela++;
+		}
+
+		Assert.assertTrue(condicao);
+
+	}
+
+	public void verificarLancamentoFuturo(String inscricao,
+			List<EnumServico> servicos, String itemLAF)
+			throws ClassNotFoundException, SQLException
+	{
+
+		FramePrincipalPage.acessarLancamentosFuturos();
+
+		if ( DriverUtils.getDriver()
+				.findElement(By.id(Atendimento.BTN_FECHAR_TELA_MENSAGEM)).isDisplayed() )
+		{
+
+			DriverUtils.clicar(FramePrincipalPage.btnFecharTelaMensagem);
+		}
+		else
+		{
+
+			int qtdEconomias = ConnectJDBC.verificarEconomias(inscricao);
+
+			for (EnumServico servico : servicos)
+			{
+
+				int i = 3;
+				int j = 0;
+
+				for (WebElement elemento : DriverUtils
+						.getDriver()
+						.findElements(
+								By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr[*]/td[2]")))
+				{
+
+					Integer codigo = servico.getCodigo();
+
+					if ( itemLAF != null && !itemLAF.isEmpty() )
+					{
+						codigo = Integer.parseInt(itemLAF);
+					}
+
+					if ( !elemento.getText().isEmpty()
+							&& Integer
+									.parseInt((String) elemento.getText().subSequence(2, 5)) == codigo
+							&& DriverUtils
+									.getDriver()
+									.findElement(
+											By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr["
+													+ i + "]/td[10]")).getText().equals(STA_TIPO_LANC)
+							&& DriverUtils
+									.getDriver()
+									.findElement(
+											By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr["
+													+ i + "]/td[11]")).getText().equals(STA_LANC_ATIVO) )
+					{
+
+						valorLaf += Util
+								.converterFormatoRealDouble(DriverUtils
+										.getDriver()
+										.findElement(
+												By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr["
+														+ i + "]/td[7]")).getText());
+						j++;
+					}
+					i++;
+					if ( j == qtdEconomias )
+					{
+
+						break;
+					}
+				}
+
+			}
+		}
+	}
+
+	private void validarLancamentoFuturo(String inscricao,
+			List<EnumServico> servicos, String itemLAF)
+			throws ClassNotFoundException, SQLException
+	{
+
+		FramePrincipalPage.acessarLancamentosFuturos();
+
+		Double lancamentoTotal = 0.0;
+
+		int qtdEconomias = ConnectJDBC.verificarEconomias(inscricao);
+
+		for (EnumServico servico : servicos)
+		{
+
+			int i = 3;
+			int j = 0;
+
+			for (WebElement elemento : DriverUtils
+					.getDriver()
+					.findElements(
+							By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr[*]/td[2]")))
+			{
+				Integer codigo = servico.getCodigo();
+
+				if ( itemLAF != null && !itemLAF.isEmpty() )
+				{
+					codigo = Integer.parseInt(itemLAF);
+				}
+
+				if ( !elemento.getText().isEmpty()
+						&& Integer.parseInt((String) elemento.getText().subSequence(2, 5)) == codigo
+						&& DriverUtils
+								.getDriver()
+								.findElement(
+										By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr["
+												+ i + "]/td[10]")).getText().equals(STA_TIPO_LANC)
+						&& DriverUtils
+								.getDriver()
+								.findElement(
+										By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr["
+												+ i + "]/td[11]")).getText().equals(STA_LANC_ATIVO) )
+				{
+
+					lancamentoTotal += Util
+							.converterFormatoRealDouble(DriverUtils
+									.getDriver()
+									.findElement(
+											By.xpath(".//*[@id='frmCenLancamentosFuturos:tblDadosLancamentoFuturo']/table[2]/tbody/tr["
+													+ i + "]/td[7]")).getText());
+					j++;
+
+					if ( j == qtdEconomias )
+					{
+
+						break;
+					}
+
+				}
+				i++;
+			}
+
+		}
+
+		Assert.assertEquals(lancamentoTotal - getValorLaf(), getValorPgtoPrazo());
+
+	}
+
+	public void validarAvisoCreditoFinanceiro(String credito)
+			throws InterruptedException, IOException
+	{
+
+		AtendimentoPage.exibirSituacaoFinanceira();
+
+		buscarRecebimentoAntecipado(credito);
+
+	}
+
+	private void buscarRecebimentoAntecipado(String valorCredito)
+			throws InterruptedException
+	{
+
+		int i = 0;
+		boolean condicao = false;
+
+		String tabelaDadosFatura = ".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr[*]/td[8]";
+
+		for (WebElement elementoTabela : DriverUtils.getDriver().findElements(
+				By.xpath(tabelaDadosFatura)))
+		{
+
+			if ( elementoTabela.getText().equals(DATA_ATUAL)
+					&& (DriverUtils
+							.getDriver()
+							.findElements(
+									By.id("frmCenFaturas:tblDadosFatura:" + i + ":btnBarcode"))
+							.size() > 0 && DriverUtils
+							.getDriver()
+							.findElement(
+									By.xpath(".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr["
+											+ (i + 2) + "]/td[6]")).getText().equals(valorCredito)) )
+			{
+				condicao = true;
+
+				break;
+
+			}
+
+			i++;
+
+		}
+
+		Assert.assertTrue(condicao, MSG_CODIGO_BARRA_PRESENTE);
+
+	}
+
+	public static void validarTransferenciaMesmoContrato()
+
+	{
+
+		List<String> mensagem = new ArrayList<String>();
+
+		mensagem.add(MSG_VALIDACAO_TRANSF_MESMO_CONTRATO);
+
+		Util.verificarMensagem(mensagem);
+	}
+
+	public void verificarSituacaoLigacao(EnumTipoLigacao situacao,
+			EnumTipoProduto tipoProduto)
+	{
+
+		boolean condicao = false;
+
+		for (int j = 2; j < 4; j++)
+		{
+
+			String produto = "";
+			String sitRede = "";
+
+			if ( DriverUtils
+					.getDriver()
+					.findElements(
+							By.xpath(".//*[@id='tblListaLigacaoImovel']/table[2]/tbody/tr["
+									+ j + "]/td[2]")).size() > 0 )
+			{
+				produto = DriverUtils
+						.getDriver()
+						.findElement(
+								By.xpath(".//*[@id='tblListaLigacaoImovel']/table[2]/tbody/tr["
+										+ j + "]/td[2]")).getText().trim();
+				sitRede = DriverUtils
+						.getDriver()
+						.findElement(
+								By.xpath(".//*[@id='tblListaLigacaoImovel']/table[2]/tbody/tr["
+										+ j + "]/td[3]")).getText().trim();
+
+				if ( produto.equals(tipoProduto.getNomeAmigavel())
+						&& sitRede.equals(situacao.getNomeAmigavel()) )
+				{
+
+					condicao = true;
+					break;
+				}
+			}
+		}
+
+		Assert.assertTrue(condicao);
+
+	}
+
+	public void verificarInstalacaoHidrometro(String medidor)
+	{
+
+		boolean condicao = false;
+		int i = 0;
+
+		for (WebElement elemento : DriverUtils
+				.getDriver()
+				.findElements(
+						By.xpath(".//*[@id='tblListaLigacaoImovel']/table[2]/tbody/tr[*]/td[2]")))
+		{
+
+			if ( elemento.getText().equals("AGUA") )
+			{
+
+				WebElement elementoSeta = DriverUtils.getDriver().findElement(
+						By.id("tblListaLigacaoImoveldd" + i));
+
+				DriverUtils.clicar(elementoSeta);
+
+				DriverUtils.esperarPorAjax();
+
+				int j = 2;
+
+				for (WebElement elementoMedidor : DriverUtils
+						.getDriver()
+						.findElements(
+								By.xpath(".//*[@id='tblListaLigacaoImovel:1:tblDetalharInstalacao']/table[2]/tbody/tr[*]/td[1]")))
+				{
+
+					if ( elementoMedidor.getText().equals(medidor)
+							&& DriverUtils
+									.getDriver()
+									.findElement(
+											By.xpath(".//*[@id='tblListaLigacaoImovel:1:tblDetalharInstalacao']/table[2]/tbody/tr["
+													+ j + "]/td[5]")).getText().equals(DATA_ATUAL) )
+					{
+						condicao = true;
+						break;
+					}
+
+				}
+
+			}
+
+			if ( condicao )
+			{
+
+				break;
+			}
+			i++;
+		}
+
+		Assert.assertTrue(condicao);
+
+	}
+
+	public static void verificarSituacaoRede(EnumSituacaoRede situacao,
+			EnumTipoProduto tipoProduto)
+	{
+		boolean condicao = false;
+
+		for (int j = 2; j < 4; j++)
+		{
+
+			String produto = "";
+			String sitRede = "";
+			String mudSit = "";
+
+			if ( DriverUtils
+					.getDriver()
+					.findElements(
+							By.xpath(".//*[@id='tblListaSiatuacaoRedeImovel']/table[2]/tbody/tr["
+									+ j + "]/td[1]")).size() > 0 )
+			{
+				produto = DriverUtils
+						.getDriver()
+						.findElement(
+								By.xpath(".//*[@id='tblListaSiatuacaoRedeImovel']/table[2]/tbody/tr["
+										+ j + "]/td[1]")).getText().trim();
+				sitRede = DriverUtils
+						.getDriver()
+						.findElement(
+								By.xpath(".//*[@id='tblListaSiatuacaoRedeImovel']/table[2]/tbody/tr["
+										+ j + "]/td[2]")).getText().trim();
+				mudSit = DriverUtils
+						.getDriver()
+						.findElement(
+								By.xpath(".//*[@id='tblListaSiatuacaoRedeImovel']/table[2]/tbody/tr["
+										+ j + "]/td[4]")).getText().trim();
+
+				if ( produto.equals(tipoProduto.name())
+						&& sitRede.equals(situacao.getNomeAmigavel()) && mudSit.isEmpty() )
+				{
+
+					condicao = true;
+					break;
+				}
+			}
+		}
+
+		System.out.println("opa");
+		Assert.assertTrue(condicao);
+
+	}
+
+	public void validarParcelamento(String parcelamento)
+	{
+
+		DriverUtils
+				.getDriver()
+				.findElement(
+						By.xpath(".//*[@id='tblDadosAtPrincipal:0:outTblDadosAtPrincipalDescricaoPagamento']"))
+				.getText().equals(parcelamento);
+
+	}
+
+	private void validarAVista()
+	{
+		DriverUtils.delay(500);
+		String valor = Util.converterFormatoDoubleReal(getValorPgtoVista());
+
+		// Função para rateio
+
+		boolean condicao = Boolean.FALSE;
+
+		for (int i = 2; i < 6; i++)
+		{
+
+			if ( DriverUtils
+					.getDriver()
+					.findElement(
+							By.xpath(".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr["
+									+ i + "]/td[3]")).getText().trim().equals("R$ 0,00")
+					&& DriverUtils
+							.getDriver()
+							.findElement(
+									By.xpath(".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr["
+											+ i + "]/td[4]")).getText().trim().equals("R$ 0,00")
+					&& DriverUtils
+							.getDriver()
+							.findElement(
+									By.xpath(".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr["
+											+ i + "]/td[6]")).getText().trim().equals(valor) )
+			{
+				condicao = Boolean.TRUE;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(condicao);
+
+	}
+
+	private void validarFaturaColocadaEmRevisao()
+	{
+		DriverUtils.delay(500);
+		String valor = Util.converterFormatoDoubleReal(getValorPgtoVista());
+
+		boolean condicao = Boolean.FALSE;
+
+		for (int i = 2; i < 6; i++)
+		{
+
+			if ( DriverUtils
+					.getDriver()
+					.findElement(
+							By.xpath(".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr["
+									+ i + "]/td[3]")).getText().trim().equals("R$ 0,00")
+					&& DriverUtils
+							.getDriver()
+							.findElement(
+									By.xpath(".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr["
+											+ i + "]/td[4]")).getText().trim().equals("R$ 0,00")
+					&& DriverUtils
+							.getDriver()
+							.findElement(
+									By.xpath(".//*[@id='frmCenFaturas:tblDadosFatura']/table[2]/tbody/tr["
+											+ i + "]/td[6]")).getText().trim().equals(valor) )
+			{
+				condicao = Boolean.TRUE;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(condicao);
+
+	}
+
+	public static void verificarPadraoInformado(EnumTipoPadrao padrao,
+			String inscricao)
+	{
+
+		DriverUtils.getTelaAtual();
+
+		DriverUtils.escrever(AtendimentoPage.lblInscricao, inscricao);
+
+		DriverUtils.clicar(AtendimentoPage.btnConsultar);
+
+		DriverUtils.esperarPorAjax();
+
+		Assert.assertEquals(padrao.getNomeAmigavel(), AtendimentoPage.lblTipoPadrao
+				.getText().trim());
+
+	}
+
+	public void validarTeste(ServicoPadrao servico)
+			throws ClassNotFoundException, SQLException, IOException,
+			MessagingException
+
+	{
+
+		if ( servico.getResultado().getProjeto().getReportar()
+				&& (BaseVars.servidor.equals(EnumServidorTeste.TESTE_72) || BaseVars.servidor
+						.equals(EnumServidorTeste.TESTE_47)) )
+		{
+
+			StringBuilder mensagem = new StringBuilder();
+
+			mensagem.append("PARÂMETROS: \n");
+
+			if ( servico.getInscOrigem() != null )
+			{
+
+				mensagem.append("    INSCRIÇÃO DE ORIGEM .: " + servico.getInscOrigem()
+						+ "\n");
+			}
+
+			if ( servico.getInscDestino() != null )
+			{
+
+				mensagem.append("    INSCRIÇÃO DE DESTINO.: "
+						+ servico.getInscDestino() + "\n");
+			}
+
+			if ( servico.getNrAtendimento() != null )
+			{
+
+				mensagem.append("    NÚMERO DE ATENDIMENTO: "
+						+ servico.getNrAtendimento() + "\n");
+			}
+
+			if ( (servico.getCpfCnpj() != null) )
+			{
+
+				mensagem.append("  CPF OU CNPJ: " + servico.getCpfCnpj() + "\n");
+
+			}
+
+			if ( servico.getResultado().getObservacao() != null )
+			{
+
+				mensagem.append(servico.getResultado().getObservacao());
+
+			}
+
+			servico.getResultado().setObservacao(mensagem.toString());
+
+			ConnectJDBC.reportarResultado(servico.getResultado(),
+					servico.getCasoTeste());
+		}
+		else
+		{
+
+			System.out.println("Inscrição de origem: " + servico.getInscOrigem());
+			System.out.println("Inscrição de destino: " + servico.getInscDestino());
+			System.out.println("Nr de atendimento: " + servico.getNrAtendimento());
+		}
+
+		ConnectJDBC.atualizarTeaTestesAutomatizados(servico.getResultado()
+				.getProjeto(), servico);
+
+		if ( servico.getResultado().getTipoErro() != EnumTipoErro.SEM_ERRO )
+		{
+			Util.enviarArquivoEmail(servico.getResultado(), servico.getCasoTeste());
+
+			Assert.fail(servico.getResultado().getTipoErro().getNomeAmigavel());
+
+		}
+
+	}
+
+	public List<EnumTipoProduto> preencherProdutoContrato()
+	{
+
+		List<EnumTipoProduto> produtosContrato = new ArrayList<EnumTipoProduto>();
+
+		for (WebElement lblProduto : DriverUtils
+				.getDriver()
+				.findElements(
+						By.xpath(".//*[@id='tabCenProdutoContrato']/table[2]/tbody/tr[*]/td[1]")))
+		{
+
+			EnumTipoProduto produto = null;
+
+			produto = EnumTipoProduto.valueOfNomeAmigavel(lblProduto.getText());
+
+			produtosContrato.add(produto);
+
+		}
+
+		return produtosContrato;
+	}
+
+	public void verificarProdutoContrato(List<EnumTipoProduto> produtosContrato)
+	{
+		List<EnumTipoProduto> produtosContratoDestino = new ArrayList<EnumTipoProduto>();
+
+		for (WebElement lblProduto : DriverUtils
+				.getDriver()
+				.findElements(
+						By.xpath(".//*[@id='tabCenProdutoContrato']/table[2]/tbody/tr[*]/td[1]")))
+		{
+			if ( produtosContrato.contains(EnumTipoProduto
+					.valueOfNomeAmigavel(lblProduto.getText())) )
+			{
+
+				produtosContratoDestino.add(EnumTipoProduto
+						.valueOfNomeAmigavel(lblProduto.getText()));
+
+			}
+
+		}
+		Assert.assertEquals(produtosContrato, produtosContratoDestino);
+
+	}
+
+}

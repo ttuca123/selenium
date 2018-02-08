@@ -1,0 +1,462 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html">
+
+
+<h:head>
+</h:head>
+
+<h:body>
+
+	<div style="width: 40px; float: left">
+		<h:form id="formMenu">
+			<a
+				href="index.xhtml">
+				<p:graphicImage value="./images/home.png" width="30px"
+					style="padding-left:10px" />
+			</a>
+		</h:form>
+	</div>
+	<div style="padding: 0px 50px 0px 50px;">
+		<h:form id="formPrincipal">
+
+			<p:growl id="message" showDetail="true" />
+
+			<p:dataTable var="servico" value="#{servicoBean.servicoList}"
+				paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+				id="tableLst" paginator="true" rows="17"
+				filteredValue="#{servicoBean.servicosFiltrados}"
+				selection="#{servicoBean.btpServico}" rowKey="#{servico.id}">
+
+				<p:ajax event="rowSelect" update=":formAlterar" />
+
+				<f:facet name="header">TESTES AUTOMATIZADOS</f:facet>
+
+				<p:column headerText="Ações" style="width:50px">
+					<p:commandLink title="Alterar" update=":formAlterar:Alterar"
+						oncomplete="dialogAlterar.show()" immediate="true"
+						actionListener="#{servicoBean.selecionar}">
+						<p:graphicImage value="./images/edit.png" width="25px" />
+						<f:setPropertyActionListener target="#{servicoBean.btpServico}"
+							value="#{servico}" />
+					</p:commandLink>
+
+					<p:commandLink title="Instrução SQL"
+						actionListener="#{servicoBean.downloadServico(servico)}"
+						ajax="false" rendered="#{servico.nrCasos>0}">
+						<p:graphicImage value="./images/sql.png" width="27px"
+							style="padding-left:10px" />
+						<f:setPropertyActionListener target="#{servicoBean.btpServico}"
+							value="#{servico}" />
+					</p:commandLink>
+
+				</p:column>
+
+				<p:column filterBy="#{servico.codServico}" headerText="Id"
+					style="width:50px" footerText="contains" filterMatchMode="contains"
+					filterStyle="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Codigo" />
+					</f:facet>
+					<h:outputText value="#{servico.codServico}" />
+				</p:column>
+
+				<p:column filterBy="#{servico.descricao}" footerText="contains"
+					style="width:650px" filterMatchMode="contains"
+					filterStyle="width:650px">
+					<f:facet name="header">
+						<h:outputText value="Teste" />
+					</f:facet>
+					<h:outputText value="#{servico.descricao}" />
+				</p:column>
+
+				<p:column style="width:50px">
+					<f:facet name="header">
+						<h:outputText value="Casos" />
+					</f:facet>
+					<h:outputText value="#{servico.nrCasos}" />
+				</p:column>
+
+				<p:column style="width:50px">
+					<f:facet name="header">
+						<h:outputText value="Ignorados" />
+					</f:facet>
+					<h:outputText value="#{servico.nrCasosIgnorados}" />
+				</p:column>
+
+				<p:column filterBy="#{servico.status.valor}" headerText="Status"
+					filterMatchMode="contains">
+					<f:facet name="header">
+						<h:outputText value="Status" />
+					</f:facet>
+
+					<h:outputText value="#{servico.status.valor}" />
+				</p:column>
+
+				<p:column filterBy="#{servico.tipoServico.valor}"
+					headerText="Classificação" filterMatchMode="contains">
+					<f:facet name="header">
+						<h:outputText value="Classificação" />
+					</f:facet>
+
+					<h:outputText value="#{servico.tipoServico.valor}" />
+				</p:column>
+
+				<p:columnGroup type="footer">
+					<p:row>
+						<p:column colspan="3" style="text-align:right"
+							footerText="Totais:" />
+
+						<p:column footerText="#{servicoBean.totalCasos}" />
+
+						<p:column footerText="#{servicoBean.totalCasosIgnorados}" />
+
+
+						<p:column footerText="#{servicoBean.resumoCasos}"
+							style="text-align:left" />
+
+						<p:column footerText="#{servicoBean.resumoTipoServicos}"
+							style="text-align:left" />
+
+					</p:row>
+				</p:columnGroup>
+			</p:dataTable>
+			<br/>
+
+			<p:commandButton value="Novo Serviço" id="cadastrar"
+				actionListener="#{servicoBean.novo}"
+				oncomplete="dialogCadastrar.show()" />
+
+
+			<p:commandButton value="Instrução SQL" id="download"
+				actionListener="#{servicoBean.downloadFiltro}" immediate="true"
+				ajax="false" />
+
+		</h:form>
+
+		<h:form id="formCadastrar">
+			<p:dialog header="Novo Registro" widgetVar="dialogCadastrar"
+				closeOnEscape="true" modal="true" resizable="false"
+				id="dialogCadastrar">
+				<p:panelGrid id="panelCadastrar" columns="2">
+					<h:outputText value="Código" />
+					<p:inputText value="#{servicoBean.btpServico.codigo}" maxlength="3" />
+
+					<h:outputText value="Descrição:" />
+					<p:inputText value="#{servicoBean.btpServico.descricao}"
+						maxlength="100" style="width:700px" />
+
+					<h:outputText value="Nr Casos de teste:" />
+					<p:inputText value="#{servicoBean.btpServico.nrCasos}"
+						disabled="true" />
+
+					<h:outputText value="Classificação:" />
+					<p:selectOneMenu value="#{servicoBean.btpServico.tipoServico}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.valor}"
+							itemValue="#{tipo}" value="#{servicoBean.lstTipoServico}" />
+					</p:selectOneMenu>
+
+					<h:outputText value="Status:" />
+					<p:selectOneMenu value="#{servicoBean.btpServico.status}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="sta" itemLabel="#{sta.valor}"
+							itemValue="#{sta}" value="#{servicoBean.lstStatus}" />
+					</p:selectOneMenu>
+
+				</p:panelGrid>
+				<p:commandButton value="Cadastrar"
+					actionListener="#{servicoBean.inserir}"
+					update=":formPrincipal:tableLst" onclick="dialogCadastrar.hide()" />
+			</p:dialog>
+		</h:form>
+
+
+		<h:form id="formAlterar">
+			<p:dialog header="Alterar Registro" widgetVar="dialogAlterar"
+				closeOnEscape="true" modal="true" id="Alterar" dynamic="true"
+				resizable="false">
+				<p:panel style="width:1400px; height:250px;  padding-bottom:20px">
+					<p:panelGrid id="panelCadastrar" columns="2">
+
+						<h:outputText value="Codigo:" />
+						<p:inputText value="#{servicoBean.btpServico.codServico}"
+							maxlength="3" disabled="true" />
+
+						<h:outputText value="Descricao:" />
+						<p:inputText value="#{servicoBean.btpServico.descricao}"
+							maxlength="100" style="width:700px" />
+
+						<h:outputText value="Casos:" />
+						<p:inputText value="#{servicoBean.btpServico.nrCasos}"
+							disabled="true" />
+
+						<h:outputText value="Classificação:" />
+						<p:selectOneMenu value="#{servicoBean.btpServico.tipoServico}"
+							unselectedLabel="Selecione uma Opção" style="width:250px">
+							<f:selectItems var="tipo" itemLabel="#{tipo.valor}"
+								itemValue="#{tipo}" value="#{servicoBean.lstTipoServico}" />
+						</p:selectOneMenu>
+
+						<h:outputText value="Status:" />
+						<p:selectOneMenu value="#{servicoBean.btpServico.status}"
+							unselectedLabel="Selecione uma Opção" style="width:250px">
+							<f:selectItems var="sta" itemLabel="#{sta.valor}"
+								itemValue="#{sta}" value="#{servicoBean.lstStatus}" />
+						</p:selectOneMenu>
+
+					</p:panelGrid>
+
+
+					<p:commandButton value="Salvar"
+						actionListener="#{servicoBean.alterar}"
+						update=":formPrincipal:tableLst, :formPrincipal:message"
+						oncomplete="dialogAlterar.hide()" />
+
+
+				</p:panel>
+
+				<p:panel style="width:1400px; height:600px;">
+					<p:dataTable var="caso" value="#{servicoBean.lstCasosTestes}"
+						paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+						id="tableLstCaso" paginator="true" rows="15"
+						selection="#{servicoBean.btpCasoTeste}"
+						rowKey="#{caso.catSeqCasoTeste}">
+
+						<p:ajax event="rowSelect" update=":formAlterarCaso" />
+
+						<f:facet name="header">CASOS DE TESTE</f:facet>
+
+						<p:column headerText="Ações" style="width:50px">
+							<p:commandLink title="Alterar"
+								update=":formAlterarCaso:AlterarCaso"
+								actionListener="#{servicoBean.selecionarCaso}"
+								oncomplete="dialogAlterarCaso.show()" immediate="true">
+								<p:graphicImage value="./images/edit.png" width="25px" />
+								<f:setPropertyActionListener
+									target="#{servicoBean.btpCasoTeste}" value="#{caso}" />
+							</p:commandLink>
+							<p:commandLink title="Excluir"
+								update=":formExcluirCaso:ExcluirCaso"
+								oncomplete="confirmationCaso.show()" immediate="true">
+								<p:graphicImage value="./images/del.png" width="25px"
+									style="padding-left:10px" />
+								<f:setPropertyActionListener
+									target="#{servicoBean.btpCasoTeste}" value="#{caso}" />
+							</p:commandLink>
+						</p:column>
+
+						<p:column style="width:50px">
+							<f:facet name="header">
+								<h:outputText value="Casos" />
+							</f:facet>
+							<h:outputText value="#{caso.idCaso}" />
+						</p:column>
+						<p:column style="width:200px">
+							<f:facet name="header">
+								<h:outputText value="Descricao" />
+							</f:facet>
+							<h:outputText value="#{caso.descricao}" />
+						</p:column>
+						<p:column style="width:200px">
+							<f:facet name="header">
+								<h:outputText value="Situação" />
+							</f:facet>
+							<h:outputText value="#{caso.catFlgSituacao}" />
+						</p:column>
+						<p:column style="width:300px">
+							<f:facet name="header">
+								<h:outputText value="Complementos" />
+							</f:facet>
+							<p:graphicImage value="./images/sql.png" width="40px"
+								rendered="#{caso.isSqlInstrucao}" style="padding-left:10px"
+								title="Instrução SQL Informada" />
+
+							<p:graphicImage value="./images/java.png" width="40px"
+								rendered="#{caso.catNomClasse.length()>0}"
+								style="padding-left:10px" title="Classe Java" />
+
+							<p:graphicImage value="./images/dados.png" width="40px"
+								rendered="#{caso.isDadosEntrada}" style="padding-left:10px"
+								title="Dados de Entrada Informados" />
+
+							<p:graphicImage value="./images/check.png" width="40px"
+								rendered="#{caso.isCriteriosAceitacao}"
+								style="padding-left:10px"
+								title="Critérios de Aceitação Informados" />
+
+						</p:column>
+					</p:dataTable>
+
+
+					<p:commandButton value="Cadastrar Caso" id="cadastrarCaso"
+						actionListener="#{servicoBean.novoCaso}"
+						update=":formCadastrarCaso:dialogCadastrarCaso"
+						oncomplete="dialogCadastrarCaso.show()" />
+				</p:panel>
+			</p:dialog>
+		</h:form>
+
+		<h:form id="formExcluir">
+
+			<p:confirmDialog id="Excluir" closeOnEscape="true"
+				message="Confirma exclusão do registro do Serviço #{servicoBean.btpServico.codigo}?"
+				header="Excluir" severity="alert" widgetVar="confirmation">
+
+				<p:commandButton value="Sim" type="submit" immediate="true"
+					styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+					actionListener="#{servicoBean.excluir}"
+					onclick="confirmation.hide()"
+					update=":formPrincipal:tableLst, :formPrincipal:message" />
+
+				<p:commandButton value="Não" type="button"
+					styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+					onclick="confirmation.hide()" />
+
+			</p:confirmDialog>
+		</h:form>
+
+		<h:form id="formAlterarCaso">
+			<p:dialog header="Alterar Registro" widgetVar="dialogAlterarCaso"
+				closeOnEscape="true" modal="true" id="AlterarCaso" dynamic="true"
+				resizable="false">
+
+				<p:panelGrid id="panelAlterarCaso" columns="2">
+
+					<h:outputText value="Codigo:" />
+					<p:inputText value="#{servicoBean.btpCasoTeste.idCaso}"
+						maxlength="12" disabled="true" />
+
+					<h:outputText value="Descricao:" />
+					<p:inputText value="#{servicoBean.btpCasoTeste.descricao}"
+						maxlength="100" style="width:700px" />
+
+					<h:outputText value="Classe de teste:" />
+					<p:inputText value="#{servicoBean.btpCasoTeste.catNomClasse}"
+						maxlength="100" style="width:700px" />
+
+					<h:outputText value="Situação:" />
+					<p:selectOneMenu value="#{servicoBean.btpCasoTeste.catFlgSituacao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="sit" itemLabel="#{sit.valor}"
+							itemValue="#{sit}" value="#{servicoBean.lstSituacao}" />
+					</p:selectOneMenu>
+
+				</p:panelGrid>
+				<p:panelGrid id="panelAlterarCasotabs" columns="2">
+					<p:tabView>
+						<p:tab title="Dados de Entrada">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{servicoBean.btpCasoTeste.dadosEntrada}" cols="100"
+									rows="20" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Critérios de Aceitação">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{servicoBean.btpCasoTeste.criteriosAceitacao}"
+									cols="100" rows="20" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Instrução SQL">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{servicoBean.btpCasoTeste.sqlInstrucao}" cols="100"
+									rows="20" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+					</p:tabView>
+				</p:panelGrid>
+
+				<p:commandButton value="Salvar"
+					actionListener="#{servicoBean.alterarCaso}"
+					update=":formAlterar:tableLstCaso, :formPrincipal:message"
+					oncomplete="dialogAlterarCaso.hide()" />
+
+			</p:dialog>
+
+		</h:form>
+
+		<h:form id="formCadastrarCaso">
+			<p:dialog header="Novo Caso" widgetVar="dialogCadastrarCaso"
+				closeOnEscape="true" modal="true" resizable="false"
+				id="dialogCadastrarCaso">
+				<p:panelGrid id="panelCadastrarCaso" columns="2">
+					<h:outputText value="Codigo:" />
+					<p:inputText value="#{servicoBean.btpCasoTeste.idCaso}"
+						maxlength="12" />
+
+					<h:outputText value="Descricao:" />
+					<p:inputText value="#{servicoBean.btpCasoTeste.descricao}"
+						maxlength="100" style="width:700px" />
+
+					<h:outputText value="Classe de teste:" />
+					<p:inputText value="#{servicoBean.btpCasoTeste.catNomClasse}"
+						maxlength="100" style="width:700px" />
+
+					<h:outputText value="Situação:" />
+					<p:selectOneMenu value="#{servicoBean.btpCasoTeste.catFlgSituacao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="sit" itemLabel="#{sit.valor}"
+							itemValue="#{sit}" value="#{servicoBean.lstSituacao}" />
+					</p:selectOneMenu>
+				</p:panelGrid>
+
+				<p:panelGrid id="panelCadastrarCasotabs" columns="2">
+					<p:tabView>
+						<p:tab title="Dados de Entrada">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{servicoBean.btpCasoTeste.dadosEntrada}" cols="100"
+									rows="20" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Critérios de Aceitação">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{servicoBean.btpCasoTeste.criteriosAceitacao}"
+									cols="100" rows="20" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Instrução SQL">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{servicoBean.btpCasoTeste.sqlInstrucao}" cols="100"
+									autoResize="false" rows="20" />
+							</h:panelGrid>
+						</p:tab>
+					</p:tabView>
+				</p:panelGrid>
+				<p:commandButton value="Cadastrar Caso"
+					actionListener="#{servicoBean.inserirCaso}"
+					update=":formAlterar:tableLstCaso,:formPrincipal:message"
+					onclick="dialogCadastrarCaso.hide()" />
+			</p:dialog>
+		</h:form>
+
+
+		<h:form id="formExcluirCaso">
+			<p:confirmDialog id="ExcluirCaso" closeOnEscape="true"
+				message="Confirma exclusão do registro do Serviço #{servicoBean.btpCasoTeste.idCaso}?"
+				header="Excluir" severity="alert" widgetVar="confirmationCaso">
+
+				<p:commandButton value="Sim" type="submit" immediate="true"
+					styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+					actionListener="#{servicoBean.excluirCaso}"
+					onclick="confirmationCaso.hide()"
+					update=":formAlterar:tableLstCaso, :formPrincipal:message" />
+
+				<p:commandButton value="Não" type="button"
+					styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+					onclick="confirmationCaso.hide()" />
+
+			</p:confirmDialog>
+		</h:form>
+	</div>
+</h:body>
+
+</html>

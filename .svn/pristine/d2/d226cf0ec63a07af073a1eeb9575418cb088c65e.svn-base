@@ -1,0 +1,63 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Parallel test runs" parallel="classes" thread-count="3">
+
+	<!-- 79 CASOS DE TESTES -->
+	<test name="THREAD_SERVICOS_CASADOS_CRITICOS" parallel="methods"
+		thread-count="1">
+		<packages>
+
+			<package name="br.com.cagece.prax.automatizacao.srv001" />
+			<package name="br.com.cagece.prax.automatizacao.srv007" />
+			<package name="br.com.cagece.prax.automatizacao.srv011" />
+			<package name="br.com.cagece.prax.automatizacao.srv012" />
+			<package name="br.com.cagece.prax.automatizacao.srv013" />
+			<package name="br.com.cagece.prax.automatizacao.srv014" />
+			<package name="br.com.cagece.prax.automatizacao.srv015" />
+			<package name="br.com.cagece.prax.automatizacao.srv019" />
+			<package name="br.com.cagece.prax.automatizacao.srv021" />
+			<package name="br.com.cagece.prax.automatizacao.srv027" />
+			<package name="br.com.cagece.prax.automatizacao.srv037" />
+			
+			<!-- SERVIÇO DESATIVADO -->
+			<!-- package name="br.com.cagece.prax.automatizacao.srv046" -->
+			
+			<package name="br.com.cagece.prax.automatizacao.srv052" />
+			<package name="br.com.cagece.prax.automatizacao.srv065" />
+			<package name="br.com.cagece.prax.automatizacao.srv066" />
+			<package name="br.com.cagece.prax.automatizacao.srv068" />
+			<package name="br.com.cagece.prax.automatizacao.srv069" />
+			<package name="br.com.cagece.prax.automatizacao.srv070" />
+			<package name="br.com.cagece.prax.automatizacao.srv071" />
+			<package name="br.com.cagece.prax.automatizacao.srv072" />
+			<package name="br.com.cagece.prax.automatizacao.srv074" />
+			<package name="br.com.cagece.prax.automatizacao.srv075" />
+			<package name="br.com.cagece.prax.automatizacao.srv076" />
+			<package name="br.com.cagece.prax.automatizacao.srv077" />
+			<package name="br.com.cagece.prax.automatizacao.srv078" />
+			<package name="br.com.cagece.prax.automatizacao.srv079" />
+			<package name="br.com.cagece.prax.automatizacao.srv083" />
+			<package name="br.com.cagece.prax.automatizacao.srv084" />
+			<package name="br.com.cagece.prax.automatizacao.srv127" />
+			<package name="br.com.cagece.prax.automatizacao.srv138" />
+			<package name="br.com.cagece.prax.automatizacao.srv149" />
+			<package name="br.com.cagece.prax.automatizacao.srv151" />
+			<package name="br.com.cagece.prax.automatizacao.srv186" />
+			<package name="br.com.cagece.prax.automatizacao.srv188" />
+			<package name="br.com.cagece.prax.automatizacao.srv260" />
+			<package name="br.com.cagece.prax.automatizacao.srv262" />
+			<package name="br.com.cagece.prax.automatizacao.srv190" />
+			<package name="br.com.cagece.prax.automatizacao.srv191" />
+			<package name="br.com.cagece.prax.automatizacao.srv284" />
+			<package name="br.com.cagece.prax.automatizacao.srv337" />
+			<package name="br.com.cagece.prax.automatizacao.srv339" />
+
+		</packages>
+	</test>
+
+
+</suite>
+
+
+
+

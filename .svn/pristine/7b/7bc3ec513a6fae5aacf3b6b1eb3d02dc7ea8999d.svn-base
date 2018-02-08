@@ -1,0 +1,45 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Parallel test runs" parallel="classes" thread-count="1">
+
+	<!-- 78 CASOS DE TESTES -->
+	<test name="THREAD_SERVICOS_SIMPLES_GRUPO_4" parallel="methods"
+		thread-count="1">
+		<packages>
+
+			<package name="br.com.cagece.prax.automatizacao.srv152" />
+			<package name="br.com.cagece.prax.automatizacao.srv157" />
+			<package name="br.com.cagece.prax.automatizacao.srv174" />
+			<package name="br.com.cagece.prax.automatizacao.srv175" />
+			<package name="br.com.cagece.prax.automatizacao.srv179" />
+			<package name="br.com.cagece.prax.automatizacao.srv214" />
+			<package name="br.com.cagece.prax.automatizacao.srv215" />
+			<package name="br.com.cagece.prax.automatizacao.srv216" />
+			<package name="br.com.cagece.prax.automatizacao.srv217" />
+			<package name="br.com.cagece.prax.automatizacao.srv233" />
+			<package name="br.com.cagece.prax.automatizacao.srv266" />
+			<package name="br.com.cagece.prax.automatizacao.srv267" />
+			<package name="br.com.cagece.prax.automatizacao.srv269" />
+			<package name="br.com.cagece.prax.automatizacao.srv272" />
+			<package name="br.com.cagece.prax.automatizacao.srv278" />
+			<package name="br.com.cagece.prax.automatizacao.srv288" />
+			<package name="br.com.cagece.prax.automatizacao.srv289" />
+			<package name="br.com.cagece.prax.automatizacao.srv295" />
+			<package name="br.com.cagece.prax.automatizacao.srv303" />
+			<package name="br.com.cagece.prax.automatizacao.srv312" />
+			<package name="br.com.cagece.prax.automatizacao.srv321" />
+			<package name="br.com.cagece.prax.automatizacao.srv327" />
+			<package name="br.com.cagece.prax.automatizacao.srv328" />
+			<package name="br.com.cagece.prax.automatizacao.srv331" />
+						
+
+
+
+		</packages>
+	</test>
+
+</suite>
+
+
+
+

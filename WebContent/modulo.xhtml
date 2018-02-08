@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html">
+
+
+<h:head>
+	<link rel="stylesheet" type="text/css" href="css/plataforma.css" />
+
+</h:head>
+
+<h:body>
+	<div style="width: 40px; float: left">
+		<h:form id="formMenu">
+			<a
+				href="index.xhtml">
+				<p:graphicImage value="./images/home.png" width="30px"
+					style="padding-left:10px" />
+			</a>
+		</h:form>
+	</div>
+
+	<div style="padding: 0px 50px 0px 50px;">
+		<h:form id="formPrincipal">
+
+			<p:growl id="message" showDetail="true" />
+
+			<div style="height: 50px">
+				<p:panelGrid id="panelSelect" columns="5">
+					<h:outputText value="Sistema" />
+					<p:selectOneMenu value="#{moduloBean.btpSistema}" immediate="true"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="TODOS" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+							itemValue="#{sistema}" value="#{moduloBean.lstSistemas}" />
+						<f:attribute name="itens" value="#{moduloBean.lstSistemas}" />
+						<p:ajax update="tableLst" />
+					</p:selectOneMenu>
+
+				</p:panelGrid>
+
+			</div>
+
+			<p:dataTable var="modulo" value="#{moduloBean.moduloList}"
+				paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+				id="tableLst" paginator="true" rows="14"
+				filteredValue="#{moduloBean.modulosFiltradas}"
+				selection="#{moduloBean.btpModulo}" rowKey="#{modulo.modSeqModulo}">
+
+				<p:ajax event="rowSelect" update=":formAlterar" />
+
+				<f:facet name="header">MÓDULOS</f:facet>
+
+				<p:column headerText="Ações" style="width:50px; height:36px;">
+
+					<p:commandLink title="Alterar" update=":formAlterar:Alterar"
+						oncomplete="dialogAlterar.show()" immediate="true"
+						actionListener="#{moduloBean.selecionar}">
+						<p:graphicImage value="./images/edit.png" width="25px" />
+						<f:setPropertyActionListener target="#{moduloBean.btpModulo}"
+							value="#{modulo}" />
+					</p:commandLink>
+
+					<p:commandLink title="Excluir" update=":formExcluir:Excluir"
+						oncomplete="confirmationCaso.show()" immediate="true">
+						<p:graphicImage value="./images/del.png" width="25px"
+							style="padding-left:10px" />
+						<f:setPropertyActionListener target="#{moduloBean.btpModulo}"
+							value="#{modulo}" />
+					</p:commandLink>
+
+				</p:column>
+
+
+				<p:column filterBy="#{modulo.modDscModulo}" headerText="Sistema"
+					style="width:300px" filterMatchMode="contains"
+					filterStyle="width:300px">
+					<f:facet name="header">
+						<h:outputText value="Módulo" />
+					</f:facet>
+
+					<h:outputText value="#{modulo.modDscModulo}" />
+				</p:column>
+
+
+				<p:column filterBy="#{modulo.modNomImagem}" footerText="contains"
+					style="width:100px" filterMatchMode="contains"
+					filterStyle="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Ícone" />
+					</f:facet>
+
+					<h:outputText value="#{modulo.modNomImagem}" />
+				</p:column>
+
+			</p:dataTable>
+			<br />
+
+			<p:commandButton value="Novo Módulo" id="cadastrar"
+				actionListener="#{moduloBean.novo}"
+				oncomplete="dialogCadastrar.show()" />
+
+		</h:form>
+
+		<h:form id="formCadastrar">
+			<p:dialog header="Nova Versão" widgetVar="dialogCadastrar"
+				closeOnEscape="true" modal="true" resizable="false"
+				id="dialogCadastrar">
+
+				<p:commandButton value="Salvar"
+					actionListener="#{moduloBean.inserir}"
+					update=":formPrincipal:tableLst" onclick="dialogCadastrar.hide()" />
+
+				<p:panelGrid columns="2" style="margin-top:10px;">
+
+				</p:panelGrid>
+
+			</p:dialog>
+		</h:form>
+
+		<h:form id="formAlterar">
+			<p:dialog header="Alterar Registro" widgetVar="dialogAlterar"
+				closeOnEscape="true" modal="true" id="Alterar" dynamic="true"
+				resizable="false">
+
+				<p:commandButton value="Salvar"
+					actionListener="#{moduloBean.alterar}"
+					update=":formPrincipal:tableLst, :formPrincipal:message"
+					oncomplete="dialogAlterar.hide()" />
+				<br />
+				<p:panelGrid columns="2" style="margin-top:10px;">
+				</p:panelGrid>
+			</p:dialog>
+		</h:form>
+		
+		<h:form id="formExcluir">
+
+			<p:confirmDialog id="Excluir" closeOnEscape="true"
+				message="Confirma exclusão do registro do Módulo #{moduloBean.btpModulo.modDscModulo}?"
+				header="Excluir" severity="alert" widgetVar="confirmation">
+
+				<p:commandButton value="Sim" type="submit" immediate="true"
+					styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+					actionListener="#{moduloBean.excluir}"
+					onclick="confirmation.hide()"
+					update=":formPrincipal:tableLst, :formPrincipal:message" />
+
+				<p:commandButton value="Não" type="button"
+					styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+					onclick="confirmation.hide()" />
+
+			</p:confirmDialog>
+		</h:form>
+	</div>
+
+
+</h:body>
+
+</html>

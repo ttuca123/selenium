@@ -1,0 +1,29 @@
+package servicos;
+
+import java.io.IOException;
+
+import pages.ItemAtendimentoPage;
+import auxiliares.DriverUtils;
+
+public class BtpSrv072DeslocamentoHidrometroKitCavalete extends ServicoPadrao {
+
+	@Override
+	public void preencherDadosBaixa(ServicoPadrao servico)
+			throws InterruptedException, IOException {
+
+		DriverUtils.selecionarComboPeloIndice(
+				ItemAtendimentoPage.cmbInstalacaoAtualizar, 1);
+
+		DriverUtils.escrever(ItemAtendimentoPage.txtNumeroLacreLigacao,
+				NUMERO_LACRE_LIGACAO);
+
+		DriverUtils.selecionarComboPeloIndice(
+				ItemAtendimentoPage.cmbLocalInstalacaoMedidor, 1);
+
+		DriverUtils.selecionarComboPeloIndice(
+				ItemAtendimentoPage.cmbProtecaoMedidor, 1);
+
+		anexarArquivo();
+
+	}
+}

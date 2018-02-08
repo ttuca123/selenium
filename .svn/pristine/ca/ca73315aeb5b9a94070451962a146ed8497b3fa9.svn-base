@@ -1,0 +1,527 @@
+package pages;
+
+import org.junit.Assert;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.How;
+
+import auxiliares.DriverUtils;
+import auxiliares.ItemAtendimento;
+
+public class ItemAtendimentoPage extends PageBase
+{
+
+	@SuppressWarnings("static-access")
+	public ItemAtendimentoPage(WebDriver webDriver)
+	{
+		super(webDriver);
+		this.driver = webDriver;
+	}
+
+	@FindBy(how = How.ID, using = ItemAtendimento.ATENDIMENTO)
+	private static WebElement nrAtendimento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SERVICO)
+	public static WebElement codServico;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.BTN_CONSULTAR)
+	public static WebElement btnConsultar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.REGISTRO)
+	private static WebElement registro;
+
+	@FindBy(how = How.XPATH, using = ItemAtendimento.ABA_BAIXAR)
+	private static WebElement abaBaixar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.BTN_ALTERAR)
+	private static WebElement btnAlterar;
+
+	@FindBy(how = How.XPATH, using = ".//*[@id='tblDados']/table[2]/tbody/tr[2]/td[4]")
+	private static WebElement lblServico;
+
+	@FindBy(how = How.XPATH, using = ".//*[@id='tblDados']/table[2]/tbody/tr[2]/td[5]")
+	public WebElement lblSituacaoServico;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_LIG_AGUA_CORTAR)
+	public static WebElement cmbLigacaoAguaCortar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_MOTIVO_LIG_AGUA_CORTAR)
+	public static WebElement cmbMotivoAguaCorte;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_LIG_AGUA_SUPRIMIR)
+	public static WebElement ligacaoAguaSuprimir;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_MOTIVO_LIG_AGUA_SUPRIMIR)
+	private static WebElement motivoAguaSupressao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_DIAMETRO_LIGACAO_AGUA)
+	public static WebElement diametroLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_SITUACAO_LIGACAO_AGUA)
+	private static WebElement situacaoLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_LIGACAO_AGUA_ATUALIZAR)
+	public static WebElement ligacaoAguaAtualizar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.LEITURA_INFORMADA_FISCAL)
+	public static WebElement leituraInformadaFiscal;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.LACRE_LIGACAO_AGUA)
+	public static WebElement lacreLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_LIGACAO_ESGOTO_SUSPENDER)
+	public static WebElement cmbLigacaoEsgotoSuspender;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_SITUACAO_LIGACAO_ESGOTO)
+	public static WebElement cmbEstadoLigacaoEsgoto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.PRODUTO_NOVA_LIGACAO_ESGOTO)
+	public static WebElement cmbProdutoNovaLigacaoEsgoto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_VOLUME_REAL)
+	public static WebElement txtVolumeReal;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.PRODUTO_NOVA_LIGACAO_AGUA)
+	public static WebElement cmbProdutoNovaLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.MATERIAL_LIGACAO_ESGOTO)
+	public static WebElement cmbMaterialLigacaoEsgoto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_MOTIVO_LIGACAO_ESGOTO_SUSPENDER)
+	public static WebElement cmbMotivoLigacaoEsgotoSuspender;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_DIAMETRO_LIGACAO_AGUA)
+	public static WebElement cmbDiametroLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_DIAMETRO_LIGACAO_ESGOTO)
+	public static WebElement cmbDiametroLigacaoEsgoto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_SITUACAO_LIGACAO_AGUA)
+	public static WebElement cmbSituacaoLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_SITUACAO_REDE_AGUA)
+	public static WebElement cmbSituacaoRedeAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_SITUACAO_REDE_ESGOTO)
+	public static WebElement cmbSituacaoRedeEsgoto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_LACRE_LIGACAO_AGUA)
+	public static WebElement cmbLacreLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_LEITURA_INFORMADA_FISCAL)
+	public static WebElement cmbLeituraInformadaFiscal;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.LACRE_INSTALACAO)
+	private static WebElement lacreInstalacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_LOCAL_INSTALACAO_MEDIDOR)
+	public static WebElement localInstalacaoMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_PROTECAO_MEDIDOR)
+	public static WebElement protecaoMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_INSTALACAO_ATUALIZAR)
+	public static WebElement cmbInstalacaoAtualizar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_INSTALACAO_SUBSTITUIR)
+	public static WebElement cmbInstalacaoSubstituir;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_LOCAL_INSTALACAO_MEDIDOR)
+	public static WebElement cmbLocalInstalacaoMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_PROTECAO_MEDIDOR)
+	public static WebElement cmbProtecaoMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_LACRE_INSTALACAO)
+	public static WebElement txtLacreInstalacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.BTN_SALVAR)
+	public static WebElement btnSalvar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.DATA_RETIRADA_MEDIDOR)
+	public static WebElement dataRetiradaMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.NUMERO_MEDIDOR)
+	private static WebElement numeroMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.NUM_LEITURA_MEDIDOR_RETIRADA)
+	private static WebElement leituraMedidorRetirada;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.LEITURA_MEDIDOR_INSTALACAO)
+	public static WebElement leituraMedidorInstalacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_INSTALACAO_ATUALIZAR)
+	private static WebElement instalacaoAtualizar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_VAZAMENTO_OCULTO)
+	private WebElement vazamentoOculto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_MOTIVO_RETIRADA_MEDIDOR)
+	public static WebElement motivoRetiradaMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.INSC_IMOVEL)
+	public static WebElement inscricaoImovel;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.PREENCHE_DATA)
+	private static WebElement data;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_RESULTADO_LAUDO)
+	private static WebElement resultadoLaudo;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.DESCRICAO_LAUDO)
+	private static WebElement descricaoLaudo;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.BTN_SALVAR_BAIXA)
+	private static WebElement btnFinalizarBaixa;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_STATUS_ATENDIMENTO)
+	public static WebElement statusAtendimento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.DATA_INSTALACAO_MEDIDOR)
+	private static WebElement dataInstalacaoMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_CONSUMO_REAL)
+	public static WebElement cmbConsumoReal;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_DESPERDICIO)
+	public static WebElement cmbDesperdicio;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_TESTOU_VAZAMENTO_OCULTO)
+	public static WebElement cmbTestouVazamentoOculto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_ERRO_LEITURA)
+	public static WebElement cmbErroLeitura;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_DISTRIB_CONSUMO)
+	public static WebElement cmbDistribConsumo;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_VAZAMENTO_OCULTO)
+	public static WebElement cmbVazamentoOculto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_VAZAMENTO_VISIVEL)
+	public static WebElement cmbVazamentoVisivel;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:enumClassifEconomiaDiferente")
+	public static WebElement cmbClassificacaoEconomiaDiferente;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:enumEnquaBaixaRendaIndevida")
+	public static WebElement cmbClassificacaoBaixaRendaIndevida;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:btpLigacaoAguaAtualizar")
+	public static WebElement cmbLigacaoAguaAtualizar;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:enumExisteTermoOcorrencia")
+	public static WebElement cmbExisteTermoOcorrencia;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:enumNegociouCampanha")
+	public static WebElement cmbNegociadoCampanha;	
+	
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:enumMotivoTermoOcorrencia")
+	private static WebElement cmbMotivoTermoOcorrencia;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:enumQuantEconomiaDiferente")
+	public static WebElement cmbQtdEconomiasDiferentes;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:clienteReincidente")
+	public static WebElement cmbClienteReincidente;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:enumSituacaoLigacaoDiferente")
+	public static WebElement cmbSituacaoLigacaoDiferente;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_0")
+	public static WebElement optByPass;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_1")
+	public static WebElement optInstalacaoEliminadorAr;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstBtpTipoCategoria:_0")
+	public static WebElement optCatComercial;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstBtpTipoCategoria:_0")
+	public static WebElement optCatIndustrial;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstBtpTipoCategoria:_0")
+	public static WebElement optCatPublica;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstBtpTipoCategoria:_0")
+	public static WebElement optCatResidencial;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:numEconomiasComerciais")
+	public static WebElement txtNumEconomiasComerciais;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:numEconomiasResidenciais")
+	public static WebElement txtNumEconomiasResidenciais;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:numEconomiasIndustriais")
+	public static WebElement txtNumEconomiasIndustriais;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:numEconomiasPublicas")
+	public static WebElement txtNumEconomiasPublicas;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_2")
+	public static WebElement optViolacaoMedidor;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_3")
+	public static WebElement optViolacaoLacreMedidor;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_4")
+	public static WebElement optMedidorDesconectado;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_5")
+	public static WebElement optLigClandestina;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_6")
+	public static WebElement optReligClandestina;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_7")
+	public static WebElement optDestamponamentoClandestino;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_8")
+	public static WebElement optLancPluvialEsgoto;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_9")
+	public static WebElement optLancDespejoForaPadroes;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_10")
+	public static WebElement optLancRedeColetoraForaPadrao;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_11")
+	public static WebElement optIntervencaoInstalacaoServicoPublico;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_12")
+	public static WebElement optDerivacaoPredialAgua;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_13")
+	public static WebElement optAutenticacaoAdulterada;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:lstTipoIrregularidade:_14")
+	public static WebElement optDerivacaoPredialEsgoto;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:cmdTermoOcorrencia")
+	public static WebElement btnGerarTermoOcorrencia;
+
+	@FindBy(how = How.ID, using = "frm1:txtNumeroTermo_mskInteiro")
+	public static WebElement txtNumeroTermoOcorrencia;
+
+	@FindBy(how = How.ID, using = "frm3:termoDetalheIrregularidade")
+	public static WebElement txtDetalharIrregularidade;
+
+	@FindBy(how = How.ID, using = "frm4:termoFiscal")
+	public static WebElement txtNomeFiscal;
+
+	@FindBy(how = How.ID, using = "termoValorTotalMulta")
+	public static WebElement lblTermoTotalMulta;
+
+	@FindBy(how = How.ID, using = "frmCadastro:subFormBaixaItemAtendimento:subFrmBaixa:vlrMultaIrregularidade_mskmoeda")
+	public static WebElement txtValorMultaTotal;
+
+	
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_RECUPERACAO)
+	public static WebElement cmbRecuperacao;
+	
+	@FindBy(how = How.ID, using = DadosBaixa.CMB_RECUPERACAO_PAVIMENTO)
+	public static WebElement cmbRecuperacaoPavimento;
+
+	@FindBy(how = How.ID, using = DadosBaixa.CMB_TIPO_PAVIMENTO)
+	public static WebElement cmbTipoPavimento;
+
+	@FindBy(how = How.ID, using = DadosBaixa.CMB_RECUPERACAO_PASSEIO)
+	public static WebElement cmbRecuperacaoPasseio;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_RESULTADO_LAUDO)
+	public static WebElement cmbResultadoLaudo;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_DESCRICAO_LAUDO)
+	public static WebElement txtDescricaoLaudo;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_DATA_INSTALACAO_MEDIDOR)
+	public static WebElement txtDataInstalacaoMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.LEITURA_MEDIDOR_INSTALACAO)
+	public static WebElement txtLeituraMedidorInstalacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_NUMERO_MEDIDOR)
+	public static WebElement txtNumeroMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_DATA_RETIRADA_MEDIDOR)
+	public static WebElement txtDataRetiradaMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_MOTIVO_RETIRADA_MEDIDOR)
+	public static WebElement cmbMotivoRetiradaMedidor;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_INSTALACAO_SUBSTITUIR)
+	public static WebElement cmbLigacaoSubstituir;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_NUMERO_LACRE_LIGACAO)
+	public static WebElement txtNumeroLacreLigacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_NUMERO_LACRE_LIGACAO_NOVA)
+	public static WebElement txtNumeroLacreLigacaoNova;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_NUM_LEITURA_MEDIDOR_RETIRADA)
+	public static WebElement txtLeituraMedidorRetirada;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_PAVIMENTO_RECUPERADO)
+	public static WebElement cmbPavimentoRecuperado;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.OPT_PAVIMENTO_ASFALTO)
+	public static WebElement optPavimentoAsfalto;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.OPT_PAVIMENTO_CALCADA)
+	public static WebElement optPavimentoCalcada;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.OPT_PAVIMENTO_CALCADA2)
+	public static WebElement optPavimentoCalcada2;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.ATENDIMENTO)
+	public static WebElement txtNrAtendimento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_LIGACAO_AGUA_REATIVAR)
+	public static WebElement cmbLigacaoAguaReativar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_LEITURA_MEDIDOR_REATIVACAO)
+	public static WebElement txtLeituraMedidorReativacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_MATERIAL_LIGACAO_AGUA)
+	public static WebElement cmbMaterialLigacaoAgua;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_DURACAO_CONSERTO_VAZAMENTO)
+	public static WebElement txtDuracaoConsertoVazamento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_PRESSAO)
+	public static WebElement txtPressao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_LIGACAO_ESGOTO_ATUALIZAR)
+	public static WebElement cmbLigacaoEsgotoAtualizar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_LIGACAO_AGUA_SUPRIMIR)
+	public static WebElement cmbLigacaoAguaSuprimir;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_MOTIVO_LIGACAO_AGUA_SUPRIMIR)
+	public static WebElement cmbMotivoLigacaoAguaSuprimir;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.OPT_FONTE_PROPRIA_ABASTECIMENTO)
+	public static WebElement optFontePropriaAbastecimento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_LOCAL_VAZAMENTO)
+	public static WebElement localVazamento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_DIAMETRO_LIGACAO_VAZAMENTO)
+	public static WebElement cmbDiametroLigacaoVazamento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_MATERIAL_LIG_VAZAMENTO)
+	public static WebElement cmbMaterialLigacaoVazamento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_TIPO_VAZAMENTO)
+	public static WebElement cmbTipoVazamento;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_NOVA_INSCRICAO)
+	public static WebElement txtNovaInscricao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_COD_LOCALIDADE)
+	public static WebElement txtCodLocalidade;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_COD_UNIDADE_NEGOCIO)
+	public static WebElement txtCodUnidadeNegocio;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_VENCIMENTO_OPCIONAL)
+	public static WebElement cmbVencimentoOpcional;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_VOLUME_RETIRADO)
+	public static WebElement txtVolumeRetirado;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_ENTREGA_FATURA)
+	public static WebElement cmbEntregaFatura;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CHECK_OPC_RECLAMACAO)
+	public static WebElement chkOpcaoRelacamacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_ESGOTO_REATIVAR)
+	public static WebElement selectEsgotoReativar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_ESGOTO_TAMPONAR)
+	public static WebElement selectEsgotoTamponar;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.SELECT_LIMITADOR_CONSUMO)
+	public static WebElement selectLimitadorConsumo;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_AREA_CONSTRUIDA)
+	public static WebElement txtAreaConstruida;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.OPT_JARDIM)
+	public static WebElement optJardim;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.NUM_PONTOS_UTILIZACAO)
+	public static WebElement txtPontosUtilizacao;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_CONSTRUCAO_IMOVEL)
+	public static WebElement cmbContrucaoImovel;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.CMB_TIPO_PISO)
+	public static WebElement cmbTipoPiso;
+
+	@FindBy(how = How.ID, using = ItemAtendimento.TXT_PROTOCOLO)
+	public static WebElement txtNrProtocolo;
+
+	@FindBy(how = How.ID, using=ItemAtendimento.TXT_MENSAGEM_ATENDIMENTO_VIRTUAL)
+	public static WebElement txtMensagemAtendimentoVirtual;
+
+	@FindBy(how = How.ID, using=ItemAtendimento.CMB_ENVIAR_FATURA_EMAIL)
+	public static WebElement cmbEnviarFaturaEmail;
+	
+	@FindBy(how = How.ID, using=ItemAtendimento.CMB_CORTE_INDEVIDO)
+	public static WebElement cmbCorteIndevido;
+
+	@FindBy(how = How.ID, using=ItemAtendimento.BTN_ANEXAR_FOTO)
+	public static WebElement btnAnexarFoto;
+		
+
+	public String getNrAtendimento()
+	{
+		return nrAtendimento.getText();
+	}
+
+	public void inicializarBaixa()
+	{
+
+		DriverUtils.clicar(registro);
+
+		DriverUtils.clicar(btnAlterar);
+
+		DriverUtils.esperarPorAjax();
+
+		DriverUtils.delay(1000);
+
+		DriverUtils.clicar(abaBaixar);
+
+	}
+
+	public void finalizarBaixa()
+	{
+
+		DriverUtils.clicar(data);
+
+		DriverUtils.esperarPorAjax();
+
+		DriverUtils.clicar(btnSalvar);
+
+		DriverUtils.esperarPorAjax();
+
+		DriverUtils.esperarPor(By.id(ItemAtendimento.SELECT_STATUS_ATENDIMENTO));
+
+		DriverUtils.selecionarComboPeloIndice(statusAtendimento, 1);
+
+		DriverUtils.clicar(btnFinalizarBaixa);
+
+		DriverUtils.esperarPorAjax();
+
+		DriverUtils.delay(500);
+
+		Assert.assertTrue(lblSituacaoServico.getText().trim()
+				.equals("SOLICITAÇÃO CONCLUÍDA"));
+
+	}
+
+}

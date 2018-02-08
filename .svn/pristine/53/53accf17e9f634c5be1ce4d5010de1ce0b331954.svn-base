@@ -1,0 +1,92 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset="UTF-8">
+		<meta charset="UTF-8" />
+	</head>
+<body>
+
+	<strong>De:</strong> EVANDRO CUSTODIO GONCALVES
+	<br/>
+	<strong>E-Mail:</strong> evandro.custodio@cagece.com.br
+	<br/>
+	<strong>Matricula:</strong> 208396
+	<br/>
+	<strong>Telefone:</strong> (85) 3101-1859
+	<br/>
+
+	<div style="padding: 0px;">
+		<hr/><h3><strong>FORMUL&Aacute;RIO DE MUDAN&Ccedil;AS</strong></h3><hr />
+	</div>
+	
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Data da mudan&ccedil;a:</h3>
+	</div>
+	
+	<div>De $dtaHoraInicio at&eacute; $dataHoraFim</div>
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Descri&ccedil;&atilde;o da Mudan&ccedil;a:</h3>
+	</div>
+	
+	<div>Implementar a vers&atilde;o $versao do $sistema, com
+		corre&ccedil;&otilde;es e melhorais realizadas.</div>
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Qual o ativo afetado?</h3>
+	</div>
+	<div>$ativoAfetado</div>
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Itens impactados pelo ativo</h3>
+	</div>
+	<div>$nomeAtivoAfetado</div>
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Riscos associados:</h3>
+	</div>
+	<div>$riscos</div>
+	
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Complexidade da Mudan&ccedil;a:</h3>
+	</div>
+	<div>M&eacute;dia</div>
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Informe mais detalhes:</h3>
+	</div>
+	<div style="text-align: justify;">$sgds</div>
+	
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Informa&ccedil;&otilde;es para o Comunicado:</h3>
+	</div>
+	<div style="text-align: justify;">$chamado</div>
+
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Qual a experi&ecirc;ncia de implementa&ccedil;&atilde;o
+			da mudan&ccedil;a?</h3>
+	</div>
+	<div>&Eacute; realizada frequentemente e h&aacute; procedimento definido para
+		execu&ccedil;&atilde;o da mesma.</div>
+
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">FAQs associadas ao Item de
+			configura&ccedil;&atilde;o:</h3>
+	</div>
+	<div>Nenhum procedimento encontrado.</div>
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Sobre os testes da mudan&ccedil;a?</h3>
+	</div>
+	<div>Foi realizado teste em ambiente de homologa&ccedil;&atilde;o Chamados
+		associados ao Item de configura&ccedil;&atilde;o N&atilde;o existem chamados anteriores
+		para esse ativo.</div>
+
+	<div style="height: 25px">
+		<h3 style="font-size: 16px;">Qual a situa&ccedil;&atilde;o sobre o plano de retorno?</h3>
+	</div>
+	<div> H&aacute;	estrat&eacute;gia de retorno conhecida, testada e validada.
+	</div>
+</body>
+</html>

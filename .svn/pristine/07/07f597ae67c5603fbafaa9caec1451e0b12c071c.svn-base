@@ -1,0 +1,61 @@
+package frames;
+
+import java.io.IOException;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.How;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import pages.MenuPage;
+import pages.PageBase;
+import auxiliares.DriverUtils;
+
+/**
+ * @author 208396
+ * @author 208396
+ *
+ */
+public class FrameUploadArquivo extends PageBase {
+
+	@FindBy(how = How.ID, using = "frm5:subFrm:inputDocumento")
+	public static WebElement arquivo;
+
+	@FindBy(how = How.ID, using = "frm5:subFrm:btnEnviarFoto")
+	public static WebElement btnAnexar;
+	
+	@FindBy(how = How.ID, using = "frm5:cmdSalvar")
+	public static WebElement btnSalvar;
+
+	public FrameUploadArquivo(WebDriver driver) {
+		super(driver);
+	}
+
+	public void anexarArquivo() throws InterruptedException, IOException {
+
+		arquivo.sendKeys("/opt/integracao/testeImage.png");
+
+		DriverUtils.esperarPorAjax();
+
+		DriverUtils.delay(1000);
+
+		DriverUtils.clicar(btnAnexar);
+		
+		DriverUtils.esperarPorAjax();
+		
+		DriverUtils.delay(1000);
+		
+		DriverUtils.clicar(btnSalvar);
+		
+		driver.switchTo().defaultContent();
+
+		WebDriverWait wait = new WebDriverWait(driver, 15);
+
+		wait.until(ExpectedConditions.refreshed(ExpectedConditions
+				.frameToBeAvailableAndSwitchToIt(MenuPage.FRAME_PRINCIPAL_ACI)));
+	
+	}
+
+}

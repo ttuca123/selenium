@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	template="/templates/masterTemplate.xhtml">
+
+	<ui:define name="header">
+
+	</ui:define>
+
+	<ui:define name="content">
+
+		<h:form id="loginform">
+			<p:panel style="width:30%;height:30%;margin-left:35%">
+				<p:messages id="login"></p:messages>
+				<h:panelGrid columns="3" cellpadding="5">
+					<h:outputLabel for="username" value="Usuário:" />
+
+					<p:inputText value="#{loginBean.username}" id="username"
+						required="true" requiredMessage="Login deve ser informado."
+						validatorMessage="Login do usuário deve ter entre 3 e 8 caracteres."
+						label="username">
+						<f:validateLength minimum="3" maximum="8" />
+					</p:inputText>
+
+					<p:watermark for="username" value="Informe Matrícula" />
+
+					<h:outputLabel for="password" value="Senha:" />
+
+					<p:keyboard value="#{loginBean.password}" id="password"
+						required="true" requiredMessage="Senha deve ser informada."
+						password="true" />
+
+					<p:watermark for="password" value="Informe sua senha" />
+
+					<h:outputText></h:outputText>
+
+					<p:commandButton id="loginButton"
+						value="#{formLogin['login.login']}" update="login"
+						style="float:right" action="#{loginBean.validateUser}"
+						ajax="false" />
+
+					<f:facet name="footer">
+						<h:panelGrid columns="3" style="margin-left:30%">
+							<p:outputPanel id="register">
+								<p:commandLink value="#{formLogin['login.register']}"
+									ajax="false" immediate="true"
+									action="registrationform?faces-redirect=true">
+								</p:commandLink>
+							</p:outputPanel>
+							<p:spacer width="10" />
+							<p:commandLink value="#{formLogin['login.changpasswd']}"
+								onclick="PF('$changepwd').show();">
+							</p:commandLink>
+						</h:panelGrid>
+					</f:facet>
+
+				</h:panelGrid>
+			</p:panel>
+		</h:form>
+	</ui:define>
+
+	<ui:define name="footer">
+	</ui:define>
+
+</ui:composition>

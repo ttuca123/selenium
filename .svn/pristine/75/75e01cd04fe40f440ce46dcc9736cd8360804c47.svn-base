@@ -1,0 +1,19 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Parallel test runs 2" parallel="classes"
+	thread-count="1">
+
+	<!-- 78 CASOS DE TESTES -->
+	<test name="TESTES_PADRAO_IMOVEIS_BCI" parallel="methods" thread-count="1">		
+		<classes>
+			<!-- class name="br.com.cagece.prax.bci.telas.TelaRecadastroBCITest"></class -->
+<class name="br.com.cagece.prax.bci.telas.TelaConsultaImovelTest"></class> 
+<!-- class name="br.com.cagece.prax.bci.telas.TelaCadastroBCITest"></class --> 
+		</classes>
+	</test>
+
+</suite>
+
+
+
+

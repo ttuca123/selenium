@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html">
+
+<h:head>
+	<link rel="stylesheet" type="text/css" href="css/plataforma.css" />
+
+	<link rel="stylesheet" href="css/morris.css" />
+	<script type="text/javascript" src="js/raphael-min.js"></script>
+	<script type="text/javascript" src="js/morris.min.js"></script>
+
+</h:head>
+
+<h:body>
+
+	<div style="width: 40px; float: left">
+		<h:form id="formMenu">
+			<a href="index.xhtml"> <p:graphicImage value="./images/home.png"
+					width="30px" style="padding-left:10px" />
+			</a>
+		</h:form>
+	</div>
+	<h:form id="formPrincipal">
+
+		<p:poll interval="60" update="tableLst tableLst3 tableLst7" />
+
+		<div class="pai">
+			<p:panel header="ESTATÍSTICAS DE EXECUÇÃO DE TESTES - PRAX"
+				style="font-size:14px; height:250px; width:100%">
+				<h:panelGrid columns="3">
+					<h:column>
+						<p:dataTable var="vo" value="#{servicoBean.listaEstatistica}"
+							class="left" paginatorAlwaysVisible="false" id="tableLst"
+							paginator="true" rows="15">
+
+							<p:column style="width:50px">
+								<f:facet name="header">
+									<h:outputText value="CASOS DE TESTES" />
+								</f:facet>
+								<h:outputText value="#{vo.descricao}" />
+							</p:column>
+							<p:column style="width:50px">
+								<f:facet name="header">
+									<h:outputText value="Total" />
+								</f:facet>
+								<h:outputText value="#{vo.total}" />
+							</p:column>
+							<p:column style="width:50px">
+								<f:facet name="header">
+									<h:outputText value="Percentual" />
+								</f:facet>
+								<h:outputText value="#{vo.percentual}" />
+							</p:column>
+						</p:dataTable>
+					</h:column>
+					<h:column>
+
+						<div id="donut-example2"
+							style="padding-left: 100px; width: 700px; height: 170px;">
+						</div>
+
+						<script type="text/javascript">
+
+$(document).ready(function(){
+
+	$.ajax({
+		  url: 'http://172.25.131.59:8091/plataforma/rest/message/',  
+		  success: function(datas) { //O HTML é retornado em 'data'
+			  
+			  Morris.Bar({
+			    element: 'donut-example2',
+			    data: datas,
+			    xkey: 'label',
+			    hideHover:true,
+			    ykeys: ['value'],
+			    resize:true,
+			    labels: ['Quantidade']
+			  }); 
+		  }
+	  });
+	  
+
+	});	
+    </script>
+
+					</h:column>
+				</h:panelGrid>
+
+			</p:panel>
+
+			<p:panel header="CASOS DE TESTES NÃO EXECUTADOS"
+				style="font-size:14px; width:100%">
+				<p:scrollPanel mode="native"
+					style="width:100%; height:130px; border:0px;">
+					<p:dataGrid var="tst5"
+						value="#{servicoBean.listaTestesNaoExecutados}"
+						style="border:0px;" emptyMessage="Todos os testes já foram executados."
+						id="tableLst7" columns="6">
+						<p:panel header="#{tst5.id}"
+							style="text-align:center; width:250px; height:90px; font-size:13px">
+							<h:panelGrid columns="1" style="width:100%; font-size:12px;">
+								<h:outputText value="#{tst5.descricao}" style="font-weight:bold" />
+							</h:panelGrid>
+						</p:panel>
+					</p:dataGrid>
+				</p:scrollPanel>
+			</p:panel>
+	
+			<p:panel header="LISTA CASOS DE TESTES COM ERROS"
+				style="font-size:14px; width:100%">
+				<p:scrollPanel mode="native"
+					style="width:100%; height:636px; border:0px;">
+					<p:dataGrid var="tst" value="#{servicoBean.listaTestesErros}"
+						style="border:0px;" emptyMessage="Nenhum Serviço com Falha"
+						id="tableLst3" columns="6">
+						<p:panel header="#{tst.casoTeste.idCaso}"
+							style="text-align:center; width:250px; height:140px; font-size:13px">
+							<table style="width: 100%">
+								<tr style="text-align: left">
+									<td><p:commandLink title="Exibir Log de Erro"
+											update=":formPrincipal:Alterar"
+											oncomplete="dialogViewErro.show()" immediate="true"
+											actionListener="#{servicoBean.mostrarLog(tst.id)}">
+											<p:graphicImage value="./images/results.jpeg" width="25px" />
+										</p:commandLink></td>
+									<td style="text-align: right"><p:commandLink
+											title="Executar" update=":formPrincipal" immediate="true"
+											style="padding-left:50px;"
+											actionListener="#{servicoBean.executarTeste(tst.casoTeste)}">
+											<p:graphicImage value="./images/run.png" width="32px" />
+										</p:commandLink></td>
+								</tr>
+
+							</table>
+							<h:panelGrid columns="1" style="width:100%; font-size:12px;">
+								<h:outputText value="#{tst.casoTeste.descricao}"
+									style="font-weight:bold" />
+							</h:panelGrid>
+							<h:panelGrid columns="1" style="width:100%;">
+								<h:outputText value="#{tst.erro.nomeAmigavel}"
+									style="color:red; font-weight:bold;" />
+							</h:panelGrid>
+						</p:panel>
+					</p:dataGrid>
+				</p:scrollPanel>
+			</p:panel>
+		</div>
+
+		<p:dialog header="Visualizar Log" widgetVar="dialogViewErro"
+			closeOnEscape="true" modal="true" id="Alterar" dynamic="true"
+			position="center, center, center, center " resizable="false">
+			<p:panelGrid id="logErro" columns="2">
+				<p:outputLabel value="Id Caso" style="font-weight:bold;" />
+				<p:outputLabel
+					value="#{servicoBean.teste.casoTeste.catSeqCasoTeste}"
+					style="font-weight:bold;" />
+
+				<p:outputLabel value="Caso de teste" style="font-weight:bold;" />
+				<p:outputLabel value="#{servicoBean.teste.casoTeste.descricao}"
+					style="font-weight:bold;" />
+
+				<p:outputLabel value="Data Execução" style="font-weight:bold;" />
+				<h:outputText value="#{servicoBean.teste.dataExecucao}"
+					style="font-weight:bold;">
+					<f:convertDateTime pattern="dd/MM/YYYY HH:mm:ss" />
+				</h:outputText>
+
+				<p:outputLabel value="Informações" />
+				<p:inputTextarea value="#{servicoBean.teste.catLogErro}" rows="25"
+					cols="100" scrollHeight="10" readonly="true" autoResize="false" />
+			</p:panelGrid>
+
+
+		</p:dialog>
+	</h:form>
+
+
+
+
+</h:body>
+
+</html>

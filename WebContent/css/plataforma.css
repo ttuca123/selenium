@@ -1,0 +1,97 @@
+@CHARSET "UTF-8";
+
+
+.pai {
+	text-align: center;
+	padding-right: 3%;
+	padding-left: 3%;
+	width: 94%;
+}
+
+.left {
+	position: relative;
+	float: left;
+	margin-left: 10px;
+}
+
+.right {
+	position: relative;
+	float: right;
+}
+
+.listaCasos {
+	width: 500px;
+	height: 170px;
+}
+
+.label {
+	font-weight: bold;
+	font-size: 13px;	
+}
+
+.destaqueRed {
+	font-weight: bold;
+	font-size: 17px;
+	color: #780000;	
+}
+
+.destaqueAzul {
+	font-weight: bold;
+	font-size: 17px;
+	color: #0066CC;	
+}
+
+
+.versaoNORMAL{
+	font-weight: normal;
+	vertical-align:top;
+	font-weight: bold;
+	font-size: 18px;
+	color: #0066CC;	
+}
+
+
+.versaoEMERGENCIAL{
+	font-weight: normal;
+	vertical-align:top;
+	font-weight: bold;
+	font-size: 18px;
+	color:	#FF0000 ;	
+}
+
+.items_log{
+	padding-left:150px;
+	font-weight: normal;
+	font-size: 17px;
+	color: gray;	
+	
+}
+
+.log{
+	
+	padding-top:20px;
+	font-weight: bold;
+	font-size: 18px;
+	color: #0066CC;	
+	width: 100%;
+}
+
+.data_hora_versao {
+	font-weight: bold;
+	font-size: 12px;
+	color: #000080;	
+	
+}
+
+.tituloLog {
+	font-weight: normal;
+	font-weight: bold;
+	float:none;
+	font-size: 16px;
+	color: #A0522D;		
+}
+
+.imagebox {
+	width: 300px;
+	height: 300px;
+}

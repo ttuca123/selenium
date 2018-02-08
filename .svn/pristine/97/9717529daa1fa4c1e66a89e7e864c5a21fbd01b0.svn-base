@@ -1,0 +1,660 @@
+package servicos;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import modelo.ResultadoTest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Assert;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.PageFactory;
+
+import pages.ItemAtendimentoPage;
+import pages.validacao.ValidacaoAtendimento;
+import anotations.CasoDeTesteServico;
+import auxiliares.Atendimento;
+import auxiliares.DataUtil;
+import auxiliares.DriverUtils;
+import auxiliares.Util;
+import enumerators.EnumServico;
+import enumerators.EnumSistema;
+import enumerators.EnumTipoExecucaoServico;
+import enumerators.EnumTipoLaudo;
+import enumerators.EnumTipoPagamento;
+import enumerators.EnumTipoProduto;
+import enumerators.EnumUsuario;
+import frames.FrameUploadArquivo;
+
+public class ServicoPadrao {
+
+	public ServicoPadrao() {
+
+	}
+
+	protected static final String SQL_NUMERO_MEDIDOR = "SELECT MED_NUM_MEDIDOR || MED_NUM_SEQ_MEDIDOR FROM MED_MEDIDOR MEDIDOR WHERE MED_STA_MEDIDOR=2 "
+			+ " AND EXISTS  (SELECT *  FROM ILM_ITEM_LOTE_MEDIDOR ILM  INNER JOIN LOM_LOTE_MEDIDOR LOM  ON ILM.LOM_SEQ_LOTE_MEDIDOR = LOM.LOM_SEQ_LOTE_MEDIDOR  INNER JOIN MVM_MOVIMENTACAO_MEDIDOR MVM"
+			+ " ON MVM.LOM_SEQ_LOTE_MEDIDOR = LOM.LOM_SEQ_LOTE_MEDIDOR  WHERE ILM.MED_SEQ_MEDIDOR = MEDIDOR.MED_SEQ_MEDIDOR  AND MVM.MVM_DAT_CONF_RECEBIMENTO IS NOT NULL ) AND ROWNUM=1";
+
+	protected static final String DESCRICAO = "Descrição: "
+			+ Util.gerarTextoAleatorio(20);
+
+	protected static final String NUMERO_LACRE_LIGACAO = Util
+			.gerarNumero(99999).toString();
+
+	protected static final String LEITURA_MEDIDOR = Util.gerarNumero(99999)
+			.toString();
+
+	protected static final String DATA_ATUAL = DataUtil
+			.converterDataFormatoddMMyyy(new Date());
+
+	protected static final String DURACAO_CONSERTO = "1:00";
+
+	protected static final String NUMERO_TERMO_OCORRENCIA = Util.gerarNumero(
+			9999999).toString();
+
+	protected static final String NUMERO_PROTOCOLO = Util.gerarNumero(9999999)
+			.toString();
+
+	private ValidacaoAtendimento validacao;
+
+	private ResultadoTest resultado;
+
+	private EnumTipoLaudo laudo;
+
+	private EnumTipoExecucaoServico enumTipoServico;
+
+	private EnumUsuario usuario;
+
+	private String casoTeste;
+
+	private String nrMedidorAtual;
+
+	private String complemento;
+
+	private String cpfCnpj;
+
+	private String nrAtendimento;
+
+	private String inscOrigem;
+
+	private String inscDestino;
+
+	private String itemLAF;
+
+	private boolean movimentarFatura;
+
+	private boolean verificarDebito;
+
+	private boolean exigeBaixa;
+
+	private boolean executarComAlcada;
+
+	private boolean geraLancamentoFuturo;
+
+	private boolean executarSolicitacao = false;
+
+	private boolean inscricaoTeste = false;
+
+	private boolean gerarPar;
+
+	private Integer nrCasoTeste;
+
+	private Integer qtdContratoOrigem = 0;
+
+	private Integer qtdContratosDestino = 0;
+
+	private double valorServico;
+
+	private List<EnumServico> servicos;
+
+	private List<EnumTipoPagamento> tiposPgtos;
+
+	private Map<Integer, String> economias;
+
+	private List<EnumTipoProduto> produtosContrato;
+
+	public List<EnumTipoProduto> getProdutosContrato() {
+		return produtosContrato;
+	}
+
+	public void setProdutosContrato(List<EnumTipoProduto> produtosContrato) {
+		this.produtosContrato = produtosContrato;
+	}
+
+	public EnumUsuario getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(EnumUsuario usuario) {
+		this.usuario = usuario;
+	}
+
+	public ServicoPadrao(Class<?> classe) throws ClassNotFoundException,
+			SQLException {
+		executarSolicitacao = true;
+
+		validacao = new ValidacaoAtendimento();
+
+		resultado = new ResultadoTest(EnumSistema.PRAX);
+
+		tiposPgtos = new ArrayList<EnumTipoPagamento>();
+
+		CasoDeTesteServico testCase = null;
+
+		executarSolicitacao = true;
+
+		for (Annotation anotacao : classe.getDeclaredAnnotations()) {
+
+			if ((classe.isAnnotationPresent(CasoDeTesteServico.class))
+					&& (anotacao instanceof CasoDeTesteServico)) {
+				testCase = (CasoDeTesteServico) anotacao;
+
+				casoTeste = testCase.id();
+
+				nrCasoTeste = Integer.parseInt(casoTeste.replace("CT", ""));
+
+				casoTeste = testCase
+						.id()
+						.concat("-SRV-")
+						.concat(StringUtils.leftPad(testCase.servico()
+								.getCodigo().toString(), 3, "0")).concat(" - ")
+						.concat(testCase.servico().getNome());
+
+				if (!testCase.complemento().isEmpty()) {
+					complemento = testCase.complemento();
+					casoTeste = casoTeste.concat(" ").concat(
+							testCase.complemento());
+				}
+
+				tiposPgtos.add(testCase.tipoPgto());
+
+				if (!tiposPgtos.get(0).equals(EnumTipoPagamento.SEM_CUSTO)
+						&& !tiposPgtos.get(0)
+								.equals(EnumTipoPagamento.SEM_ONUS)) {
+
+					casoTeste = casoTeste.concat(" ").concat(
+							testCase.tipoPgto().getNomeAmigavel());
+
+				}
+
+				System.out.println(casoTeste);
+
+				usuario = testCase.usuario();
+
+				servicos = new ArrayList<EnumServico>();
+
+				servicos.add(testCase.servico());
+
+				enumTipoServico = testCase.enumTipoServico();
+
+				verificarDebito = testCase.verificaDebito();
+
+				geraLancamentoFuturo = testCase.geraLancamentoFuturo();
+
+				if (testCase.servicoCasado() != EnumServico.NENHUM) {
+					servicos.add(testCase.servicoCasado());
+
+					tiposPgtos.add(testCase.tipoPgtoServCasado());
+				}
+
+				gerarPar = testCase.gerarParInscricao();
+
+				exigeBaixa = testCase.executarBaixa();
+
+				executarComAlcada = testCase.executarComAlcada();
+
+				itemLAF = testCase.itemLAF();
+
+				valorServico = testCase.valor();
+
+				laudo = testCase.laudo();
+
+				verificarDebito = testCase.verificaDebito();
+
+				movimentarFatura = testCase.movimentarFatura();
+
+				if (testCase.inscricaoOrigem().length() > 0) {
+					inscOrigem = testCase.inscricaoOrigem();
+					inscricaoTeste = true;
+				}
+
+				if (testCase.servicoCasado() != EnumServico.NENHUM) {
+
+					servicos.add(testCase.servicoCasado());
+
+					tiposPgtos.add(testCase.tipoPgtoServCasado());
+				}
+
+			}
+		}
+
+	}
+
+	public boolean isInscricaoTeste() {
+		return inscricaoTeste;
+	}
+
+	public void setInscricaoTeste(boolean inscricaoTeste) {
+		this.inscricaoTeste = inscricaoTeste;
+	}
+
+	public List<EnumTipoPagamento> getTiposPgtos() {
+		return tiposPgtos;
+	}
+
+	public void setTiposPgtos(List<EnumTipoPagamento> tiposPgtos) {
+		this.tiposPgtos = tiposPgtos;
+	}
+
+	public String getCpfCnpj() {
+		return cpfCnpj;
+	}
+
+	public void setCpfCnpj(String cpfCnpj) {
+		this.cpfCnpj = cpfCnpj;
+	}
+
+	public String getNrAtendimento() {
+		return nrAtendimento;
+	}
+
+	public void setNrAtendimento(String nrAtendimento) {
+		this.nrAtendimento = nrAtendimento;
+	}
+
+	public String getInscOrigem() {
+		return inscOrigem;
+	}
+
+	public void setInscOrigem(String inscOrigem) {
+		this.inscOrigem = inscOrigem;
+	}
+
+	public Integer getQtdContratoOrigem() {
+		return qtdContratoOrigem;
+	}
+
+	public String getInscDestino() {
+		return inscDestino;
+	}
+
+	public void setInscDestino(String inscDestino) {
+		this.inscDestino = inscDestino;
+	}
+
+	public void setQtdContratoOrigem(Integer qtdContratos) {
+		this.qtdContratoOrigem = qtdContratos;
+	}
+
+	public List<EnumServico> getServicos() {
+		return servicos;
+	}
+
+	public boolean isGerarPar() {
+		return gerarPar;
+	}
+
+	public void setGerarPar(boolean gerarPar) {
+		this.gerarPar = gerarPar;
+	}
+
+	public void setServicos(List<EnumServico> servicos) {
+		this.servicos = servicos;
+	}
+
+	public Integer getQtdContratosDestino() {
+		return qtdContratosDestino;
+	}
+
+	public void setQtdContratosDestino(Integer qtdContratosDestino) {
+		this.qtdContratosDestino = qtdContratosDestino;
+	}
+
+	public Map<Integer, String> getEconomias() {
+		if (economias == null) {
+
+			economias = new HashMap<Integer, String>();
+		}
+
+		return economias;
+	}
+
+	public void setEconomias(Map<Integer, String> economias) {
+		this.economias = economias;
+	}
+
+	public double getValorServico() {
+		return valorServico;
+	}
+
+	public void setValorServico(double valorServico) {
+		this.valorServico = valorServico;
+	}
+
+	/**
+	 * Método responsável por executar instruçServicoões com o objetivo de
+	 * localizar informações que serão úteis durante o atendimento
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         05/10/2015 - 14:32:49.
+	 */
+	public void preAtendimento() {
+	}
+
+	public void preAtendimento(ServicoPadrao servicoPadrao) throws Exception {
+	}
+
+	/**
+	 * Método responsável por executar instruções para validações antes do
+	 * atendimento
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         05/10/2015 - 14:32:49.
+	 */
+	public void preValidar() {
+
+	}
+
+	public void preValidar(ServicoPadrao servicoPadrao) {
+
+	}
+
+	/**
+	 * Método responsável por executar instruções para preenchimento dos dados
+	 * da baixa
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         05/10/2015 - 14:28:40.
+	 */
+
+	public void preencherDadosBaixa(ServicoPadrao servicoPadrao)
+			throws Exception {
+	};
+
+	/**
+	 * Método responsável por executar instruções para preenchimento de dados
+	 * complementares durante a solicitação de serviços
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         05/10/2015 - 14:29:17.
+	 * @throws Exception
+	 */
+	public void preencherDadosComplementares() throws Exception {
+	};
+
+	public void preencherDadosComplementares(ServicoPadrao servico)
+			throws Exception {
+	};
+
+	/**
+	 * Método responsável por executar instruções para preenchimento de dados em
+	 * frames integrados à solicitação de serviços
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         05/10/2015 - 14:30:00.
+	 */
+	public void executarIntegracao() {
+	};
+
+	public void executarIntegracao(ServicoPadrao servicoPadrao)
+			throws Exception {
+	};
+
+	/**
+	 * Método responsável por executar instruções para confirmação antes da
+	 * conclusão do atendiento
+	 * 
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         05/10/2015 - 14:30:36.
+	 * @throws Exception
+	 */
+
+	public void confirmarAtendimento() throws Exception {
+	};
+
+	public void confirmarAtendimento(ServicoPadrao servicoPadrao)
+			throws Exception {
+	};
+
+	/**
+	 * Método responsável por executar instruções para validações após baixa do
+	 * serviço
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         05/10/2015 - 14:30:36.
+	 * @param servicoPadrao
+	 *            TODO
+	 * @throws Exception
+	 */
+	public void verificar() throws Exception {
+	};
+
+	public void verificar(ServicoPadrao servicoPadrao) throws Exception {
+	};
+
+	protected void preencheLaudo(EnumTipoLaudo laudo) {
+
+		if (!laudo.equals(EnumTipoLaudo.IMPROCEDENTE)) {
+			DriverUtils.selecionarComboPeloNome(
+					ItemAtendimentoPage.cmbResultadoLaudo,
+					EnumTipoLaudo.PROCEDENTE.getNomeAmigavel());
+
+		} else {
+			DriverUtils.selecionarComboPeloNome(
+					ItemAtendimentoPage.cmbResultadoLaudo,
+					EnumTipoLaudo.IMPROCEDENTE.getNomeAmigavel());
+		}
+
+		DriverUtils.escrever(ItemAtendimentoPage.txtDescricaoLaudo, DESCRICAO);
+
+	}
+
+	protected void confirmarAdvertencia() {
+		if (DriverUtils.getDriver()
+				.findElements(By.id(Atendimento.BTN_SIM_ADVERTENCIA)).size() > 0) {
+
+			DriverUtils.getDriver()
+					.findElement(By.id(Atendimento.BTN_SIM_ADVERTENCIA))
+					.click();
+
+			DriverUtils.esperarPorAjax();
+		}
+
+	}
+
+	public void validarRegistroAtendimento() {
+
+	}
+
+	public void validarRegistroAtendimento(ServicoPadrao servico) {
+
+	}
+
+	public void validarRegistroBaixa() {
+
+	}
+
+	public void validarRegistroBaixa(ServicoPadrao servico) {
+
+	}
+
+	public ResultadoTest getResultado() {
+		return resultado;
+	}
+
+	public void setResultado(ResultadoTest resultado) {
+		this.resultado = resultado;
+	}
+
+	public ValidacaoAtendimento getValidacao() {
+		return validacao;
+	}
+
+	public void setValidacao(ValidacaoAtendimento validacao) {
+		this.validacao = validacao;
+	}
+
+	public boolean isExigeBaixa() {
+		return exigeBaixa;
+	}
+
+	public void setExigeBaixa(boolean exigeBaixa) {
+		this.exigeBaixa = exigeBaixa;
+	}
+
+	public boolean isExecutarComAlcada() {
+		return executarComAlcada;
+	}
+
+	public void setExecutarComAlcada(boolean executarComAlcada) {
+		this.executarComAlcada = executarComAlcada;
+	}
+
+	public String getCasoTeste() {
+		return casoTeste;
+	}
+
+	public void setCasoTeste(String casoTeste) {
+		this.casoTeste = casoTeste;
+	}
+
+	public Integer getNrCasoTeste() {
+		return nrCasoTeste;
+	}
+
+	public void setNrCasoTeste(Integer nrCasoTeste) {
+		this.nrCasoTeste = nrCasoTeste;
+	}
+
+	public String getComplemento() {
+		return complemento;
+	}
+
+	public void setComplemento(String complemento) {
+		this.complemento = complemento;
+	}
+
+	public EnumTipoLaudo getLaudo() {
+		return laudo;
+	}
+
+	public void setLaudo(EnumTipoLaudo laudo) {
+		this.laudo = laudo;
+	}
+
+	public EnumTipoExecucaoServico getEnumTipoServico() {
+		return enumTipoServico;
+	}
+
+	public void setEnumTipoServico(EnumTipoExecucaoServico enumTipoServico) {
+		this.enumTipoServico = enumTipoServico;
+	}
+
+	public boolean isExecutarSolicitacao() {
+		return executarSolicitacao;
+	}
+
+	public boolean isMovimentaFatura() {
+		return movimentarFatura;
+	}
+
+	public void setExecutarSolicitacao(boolean executarSolicitacao) {
+		this.executarSolicitacao = executarSolicitacao;
+	}
+
+	public String getNrMedidorAtual() {
+		return nrMedidorAtual;
+	}
+
+	public void setNrMedidorAtual(String nrMedidorAtual) {
+		this.nrMedidorAtual = nrMedidorAtual;
+	}
+
+	public String getItemLAF() {
+		return itemLAF;
+	}
+
+	public void setItemLAF(String itemLAF) {
+		this.itemLAF = itemLAF;
+	}
+
+	protected void verificarGeracaoServico() {
+		verificarGeracaoServicos(null);
+	}
+
+	protected void verificarGeracaoServicos(Map<String, Boolean> servicos) {
+
+		String sitPendenteExecucao = "PENDENTE DE EXECUÇÃO";
+
+		DriverUtils.limparCampo(ItemAtendimentoPage.codServico);
+
+		DriverUtils.clicar(ItemAtendimentoPage.btnConsultar);
+
+		DriverUtils.esperarPorAjax();
+
+		DriverUtils.delay(1000);
+
+		int indiceStatusExecucao = 2;
+
+		for (WebElement lblServico : DriverUtils.getDriver().findElements(
+				By.xpath("//*[@id='tblDados']/table[2]/tbody/tr[*]/td[4]"))) {
+
+			for (Map.Entry<String, Boolean> servico : servicos.entrySet()) {
+
+				if (servico.getValue() == Boolean.FALSE
+						&& lblServico.getText().trim().equals(servico.getKey())
+						&& DriverUtils
+								.getDriver()
+								.findElement(
+										By.xpath("//*[@id='tblDados']/table[2]/tbody/tr["
+												+ indiceStatusExecucao
+												+ "]/td[5]")).getText().trim()
+								.equals(sitPendenteExecucao)) {
+
+					servico.setValue(Boolean.TRUE);
+
+				}
+
+			}
+
+			indiceStatusExecucao++;
+
+		}
+
+		if (servicos.containsValue(Boolean.FALSE)) {
+			Assert.assertTrue(Boolean.FALSE);
+
+		}
+
+	}
+
+	public boolean isGeraLancamentoFuturo() {
+		return geraLancamentoFuturo;
+	}
+
+	public void setGeraLancamentoFuturo(boolean geraLancamentoFuturo) {
+		this.geraLancamentoFuturo = geraLancamentoFuturo;
+	}
+
+	public void anexarArquivo() throws InterruptedException, IOException {
+
+		DriverUtils.clicar(ItemAtendimentoPage.btnAnexarFoto);
+
+		DriverUtils.avancarFrame();
+
+		FrameUploadArquivo frameUploadImagem = PageFactory.initElements(
+				DriverUtils.getDriver(), FrameUploadArquivo.class);
+
+		frameUploadImagem.anexarArquivo();
+	}
+
+}

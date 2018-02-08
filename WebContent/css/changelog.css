@@ -1,0 +1,38 @@
+@CHARSET "UTF-8";
+
+
+.ui-datatable table {
+	border-style: none;
+	border:none;	
+}
+
+.ui-datatable table td{
+	border-style: none;
+	border:none;	
+}
+
+.ui-datatable thead th, .ui-datatable tbody td, .ui-datatable tfoot td {
+	padding:0px;
+}
+
+}
+	
+.ui-datatable-odd {
+    border:none;
+    height: 30px;
+}
+
+
+.ui-datatable-even {
+    border:none;
+     list-style-type: circle;
+    height: 30px;
+}
+.ui-datatable-odd {
+    border:none;
+    height: 30px;
+}
+
+.ui-widget-content {
+    border:none;
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Parallel test runs" parallel="classes" thread-count="3">
+
+	<!-- 49 CASOS DE TESTES -->
+	<test name="THREAD_SERVICOS_INTEGRADOS" parallel="methods"
+		thread-count="1">
+		<packages>
+			<package name="br.com.cagece.prax.automatizacao.srv137" />
+			<package name="br.com.cagece.prax.automatizacao.srv290" />
+			<package name="br.com.cagece.prax.automatizacao.srv313" />
+			<package name="br.com.cagece.prax.automatizacao.srv257" />
+			<package name="br.com.cagece.prax.automatizacao.srv167" />
+			<package name="br.com.cagece.prax.automatizacao.srv055" />
+			<package name="br.com.cagece.prax.automatizacao.srv061" />
+			<package name="br.com.cagece.prax.automatizacao.srv062" />
+			<package name="br.com.cagece.prax.automatizacao.srv334" />
+			<package name="br.com.cagece.prax.automatizacao.srv335" />
+		</packages>
+	</test>
+
+
+</suite>
+
+
+
+

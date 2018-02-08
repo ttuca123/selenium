@@ -1,0 +1,557 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html">
+<h:head>
+	<link rel="stylesheet" type="text/css" href="css/plataforma.css" />
+
+</h:head>
+<h:body>
+	<div style="width: 40px; float: left">
+		<h:form id="formMenu">
+			<a href="index.xhtml"> <p:graphicImage value="./images/home.png"
+					width="30px" style="padding-left:10px" />
+			</a>
+		</h:form>
+	</div>
+
+	<div style="padding: 0px 50px 0px 50px;">
+		<h:form id="formPrincipal">
+
+			<p:growl id="message" showDetail="true" />
+
+			<div style="height: 50px">
+				<p:panelGrid id="panelSelect" columns="5">
+					<h:outputText value="Sistema" />
+					<p:selectOneMenu value="#{demandaBean.btpSistema}" immediate="true"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+							itemValue="#{sistema}" value="#{demandaBean.lstSistemas}" />
+						<f:attribute name="itens" value="#{demandaBean.lstSistemas}" />
+						<p:ajax update="btnImport, versoes, btnCadastrar, tableLst" />
+					</p:selectOneMenu>
+
+					<h:outputText value="Versão" />
+					<p:selectOneMenu value="#{demandaBean.btpVersao}" id="versoes"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="ver" itemLabel="#{ver.verIdVersaoCompleta}"
+							itemValue="#{ver}" value="#{demandaBean.lstVersoes}" />
+						<f:attribute name="itens" value="#{demandaBean.lstVersoes}" />
+						<p:ajax update="btnImport, btnCadastrar, tableLst" />
+					</p:selectOneMenu>
+
+					<p:commandButton value="Adicionar Demanda" id="btnCadastrar"
+						rendered="#{demandaBean.btpVersao!=null and demandaBean.btpVersao.situacao.numero==1}"
+						actionListener="#{demandaBean.novo}" immediate="true"
+						update=":formCadastrar:dialogCadastrar, message"
+						oncomplete="dialogCadastrar.show()" />
+
+
+					<p:commandLink title="Importar" immediate="true" id="btnImport"
+						actionListener="#{demandaBean.importar}"  >
+
+						<p:graphicImage value="./images/import.png" width="25px"
+							rendered="#{demandaBean.verificaImportacao}"/>
+						<p:ajax update="btnImport, btnCadastrar, tableLst" />
+					</p:commandLink>
+
+				</p:panelGrid>
+			</div>
+
+			<p:dataTable var="demanda" value="#{demandaBean.demandaList}"
+				style="margin-top:10px" id="tableLst"
+				filteredValue="#{demandaBean.demandasFiltradas}"
+				selection="#{demandaBean.btpDemanda}"
+				rowKey="#{demanda.demSeqDemanda}">
+
+				<p:ajax event="rowSelect" update=":formAlterar" />
+
+				<f:facet name="header"> DEMANDAS </f:facet>
+
+				<p:column headerText="Ações" style="width:50px; height:36px;">
+
+					<p:commandLink title="Alterar" update=":formAlterar:Alterar"
+						oncomplete="dialogAlterar.show()" immediate="true"
+						actionListener="#{demandaBean.selecionar}"
+						rendered="#{demanda.btpVersao.situacao.numero==1}">
+						<p:graphicImage value="./images/edit.png" width="25px" />
+						<f:setPropertyActionListener target="#{demandaBean.btpDemanda}"
+							value="#{demanda}" />
+					</p:commandLink>
+
+					<p:commandLink title="Excluir" update=":formExcluir:Excluir"
+						rendered="#{demanda.btpVersao.situacao.numero==1}"
+						oncomplete="confirmationCaso.show()" immediate="true">
+						<p:graphicImage value="./images/del.png" width="25px"
+							style="padding-left:10px" />
+						<f:setPropertyActionListener target="#{demandaBean.btpDemanda}"
+							value="#{demanda}" />
+					</p:commandLink>
+
+				</p:column>
+
+				<p:column filterBy="#{demanda.demNumSGD}" footerText="contains"
+					filterMatchMode="contains"
+					style="text-align:center; vertical-align:middle;"
+					filterStyle="width:80px">
+					<f:facet name="header">
+						<h:outputText value="SGD" />
+					</f:facet>
+					<p:graphicImage value="#{demanda.demCodTipoDemanda.imagem} "
+						width="17px" style="padding-right:10px;" />
+					<h:outputText value="#{demanda.demNumSGD}" />
+					<h:outputText value=" E"
+						rendered="#{demanda.demFlgExtra.ordinal==1}" />
+				</p:column>
+
+				<p:column filterBy="#{demanda.demDscDemanda}" footerText="contains"
+					style="white-space:normal; text-align:justify;"
+					filterMatchMode="contains" filterStyle="width:500px">
+					<f:facet name="header">
+						<h:outputText value="Descrição" />
+					</f:facet>
+					<h:outputText value="#{demanda.demDscDemanda}" />
+				</p:column>
+				<p:column headerText="Mod"
+					filterBy="#{demanda.btpModulo.modDscModulo}" footerText="contains"
+					style="white-space:normal; text-align:center;"
+					filterMatchMode="contains" filterStyle="width:50px">
+					<p:graphicImage value="#{demanda.btpModulo.modNomImagem}"
+						width="35px" style="padding-right:10px;"
+						title="${demanda.btpModulo.modDscModulo}" />
+
+				</p:column>
+
+				<p:column headerText="Testador" filterBy="#{demanda.usuSeqUsuario}"
+					footerText="exact" filterMatchMode="exact">
+					<f:facet name="header">
+						<h:outputText value="Testador" />
+					</f:facet>
+					<h:outputText value="#{demanda.usuSeqUsuario}" />
+				</p:column>
+
+				<p:column headerText="Data Execução">
+					<f:facet name="header">
+						<h:outputText value="Data de Execução" />
+					</f:facet>
+					<h:outputText value="#{demanda.demDataExecucao}">
+						<f:convertDateTime pattern="dd/MM/YYYY HH:mm:ss" timeZone="GMT-3" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="Status"
+					filterBy="#{demanda.demCodStatus.ordinal}" footerText="exact"
+					filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('tableLst').filter()">
+							<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+								noSelectionOption="true" />
+							<f:selectItems value="#{demandaBean.lstTipoDemanda}" var="item"
+								itemValue="#{item.ordinal}" itemLabel="#{item.nomeAmigavel}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<p:graphicImage value="#{demanda.demCodStatus.imagem}" width="25px"
+						style="padding-right:10px;"
+						title="#{demanda.demCodStatus.nomeAmigavel}" />
+
+					<p:graphicImage value="#{demanda.chamadoMudanca}"
+						rendered="#{demanda.demFlgExibirChamado.letra==1}" width="25px"
+						style="padding-right:10px;" title="Incluída no Chamado de Mudança" />
+
+					<p:graphicImage value="../images/sql.png" width="25px"
+						style="padding-right:10px;" title="SQL Adicionado"
+						rendered="#{demanda.lstSQLs.size()>0}" />
+
+				</p:column>
+
+
+
+				<p:columnGroup type="footer">
+					<p:row>
+						<p:column colspan="2" footerText="" style="text-align:left;" />
+						<p:column footerText="#{demandaBean.resumoDemandasTipo}"
+							style="text-align:left;" />
+						<p:column footerText="#{demandaBean.resumoDemandas}"
+							style="text-align:left;" colspan="2" />
+						<p:column colspan="2"
+							footerText="#{demandaBean.resumoTipoDemandas}"
+							style="text-align:left;" />
+
+					</p:row>
+				</p:columnGroup>
+			</p:dataTable>
+
+		</h:form>
+
+		<h:form id="formCadastrar">
+			<p:dialog header="Nova Demanda" widgetVar="dialogCadastrar"
+				closeOnEscape="false" modal="true" resizable="false"
+				maximizable="true" id="dialogCadastrar">
+
+				<p:commandButton value="Salvar"
+					actionListener="#{demandaBean.inserir}"
+					update=":formPrincipal:tableLst, :formPrincipal:message"
+					oncomplete="dialogCadastrar.hide()" />
+
+
+				<p:panelGrid id="panelCadastrar" columns="2" style="margin-top:10px">
+
+					<h:outputText value="Versão" />
+					<p:selectOneMenu value="#{demandaBean.btpDemanda.btpVersao}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItems var="vers" itemLabel="#{vers.verIdVersao}"
+							itemValue="#{vers}" value="#{demandaBean.lstVersoes}" />
+						<f:attribute name="itens" value="#{demandaBean.lstVersoes}" />
+					</p:selectOneMenu>
+
+					<h:outputText value="Módulo:" />
+					<p:selectOneMenu value="#{demandaBean.btpDemanda.btpModulo}"
+						required="true" unselectedLabel="Selecione uma Opção"
+						converter="converterPadrao" style="width:250px">
+						<f:selectItems var="mods" itemLabel="#{mods.modDscModulo}"
+							itemValue="#{mods}" value="#{demandaBean.lstModulos}" />
+						<f:attribute name="itens" value="#{demandaBean.lstModulos}" />
+					</p:selectOneMenu>
+
+					<h:outputText value="SGD:" />
+					<p:inputText value="#{demandaBean.btpDemanda.demNumSGD}"
+						maxlength="10" style="width:150px" />
+
+					<h:outputText value="Descrição:" />
+					<p:inputTextarea value="#{demandaBean.btpDemanda.demDscDemanda}"
+						cols="300" rows="6" style="width:700px" />
+
+					<h:outputText value="Tipo de Demanda:" />
+					<p:selectOneMenu
+						value="#{demandaBean.btpDemanda.demCodTipoDemanda}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.nomeAmigavel}"
+							itemValue="#{tipo}" value="#{demandaBean.lstTipoDemanda}" />
+					</p:selectOneMenu>
+
+
+					<h:outputText value="Extra:" />
+					<p:selectOneMenu value="#{demandaBean.btpDemanda.demFlgExtra}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="situacao" itemLabel="#{situacao.nomeAmigavel}"
+							itemValue="#{situacao}" value="#{demandaBean.lstSituacao}" />
+
+					</p:selectOneMenu>
+
+					<h:outputText value="Chamado de Mudança:" />
+					<p:selectOneMenu
+						value="#{demandaBean.btpDemanda.demFlgExibirChamado}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="situacao" itemLabel="#{situacao.nomeAmigavel}"
+							itemValue="#{situacao}" value="#{demandaBean.lstSituacao}" />
+
+						<p:ajax update="panelAlterarCasotabs" />
+
+					</p:selectOneMenu>
+
+				</p:panelGrid>
+				<br />
+				<p:panelGrid id="panelAlterarCasotabs" columns="2"
+					style="width:100%;">
+					<p:tabView>
+						<p:tab title="Comunicado"
+							rendered="#{demandaBean.btpDemanda.demFlgExibirChamado.letra==1}"
+							id="tabChamadoCad">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea value="#{demandaBean.btpDemanda.demDscChamado}"
+									cols="100" rows="08" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Dados de Entrada">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{demandaBean.btpDemanda.demDscEntradas}" cols="100"
+									rows="08" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Critérios de Aceitação">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{demandaBean.btpDemanda.demCritAceitacao}" cols="100"
+									rows="08" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Instrução SQL">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{demandaBean.btpDemanda.demInstrucaoSql}" cols="100"
+									rows="08" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Metodologia de Testes">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{demandaBean.btpDemanda.demDscProcedimento}" cols="100"
+									rows="08" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+						<p:tab title="Observação">
+							<h:panelGrid columns="2" cellpadding="10">
+								<p:inputTextarea
+									value="#{demandaBean.btpDemanda.demDscObservacao}" cols="100"
+									rows="08" autoResize="false" />
+							</h:panelGrid>
+						</p:tab>
+					</p:tabView>
+				</p:panelGrid>
+			</p:dialog>
+		</h:form>
+
+
+		<h:form id="formAlterar" prependId="true">
+			<p:dialog header="Alterar Registro" widgetVar="dialogAlterar"
+				id="Alterar" closeOnEscape="false" modal="true" resizable="false"
+				maximizable="true" height="800px">
+
+
+				<p:commandButton value="Salvar"
+					actionListener="#{demandaBean.alterar}"
+					update=":formPrincipal:tableLst, :formPrincipal:message"
+					oncomplete="dialogAlterar.hide()" />
+
+				<p:panelGrid id="panelCadastrar" columns="4"
+					style="margin-top:10px; width:100%; border:0px">
+
+					<h:outputText value="Versão" />
+					<h:outputText value="Tipo de Demanda:" />
+					<h:outputText value="Módulo:" />
+					<h:outputText value="Status:" />
+					<p:selectOneMenu value="#{demandaBean.btpDemanda.btpVersao}"
+						disabled="true" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItems var="vers" itemLabel="#{vers.verIdVersao}"
+							itemValue="#{vers}" value="#{demandaBean.lstVersoes}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu
+						value="#{demandaBean.btpDemanda.demCodTipoDemanda}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.nomeAmigavel}"
+							itemValue="#{tipo}" value="#{demandaBean.lstTipoDemanda}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{demandaBean.btpDemanda.btpModulo}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItems var="mods" itemLabel="#{mods.modDscModulo}"
+							itemValue="#{mods}" value="#{demandaBean.lstModulos}" />
+						<f:attribute name="itens" value="#{demandaBean.lstModulos}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{demandaBean.btpDemanda.demCodStatus}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="status" itemLabel="#{status.nomeAmigavel}"
+							itemValue="#{status}" value="#{demandaBean.lstStatusDemanda}">
+						</f:selectItems>
+
+						<p:ajax update="popupData"
+							listener="#{demandaBean.gerarDataExecucao()}" />
+
+					</p:selectOneMenu>
+				</p:panelGrid>
+				<p:panelGrid columns="2" style="margin-top:10px">
+
+					<h:outputText value="Descrição:" />
+					<p:inputTextarea value="#{demandaBean.btpDemanda.demDscDemanda}"
+						rows="6" cols="99" />
+				</p:panelGrid>
+				<p:panelGrid columns="5"
+					style="margin-top:10px; width:100%; border:0px">
+					<h:outputText value="SGD:" styleClass="label" />
+					<p:outputLabel for="popupData" value="Data Execução:"
+						styleClass="label" />
+					<h:outputText value="Testador" styleClass="label" />
+					<h:outputText value="Extra:" styleClass="label" />
+					<h:outputText value="Chamado de Mudança:" styleClass="label" />
+
+					<p:inputText value="#{demandaBean.btpDemanda.demNumSGD}"
+						readonly="true" maxlength="10" style="width:150px" />
+
+					<p:calendar id="popupData"
+						value="#{demandaBean.btpDemanda.demDataExecucao}"
+						pattern="dd/MM/yyyy HH:mm:ss" />
+
+
+					<p:inputText value="#{demandaBean.btpDemanda.usuSeqUsuario}"
+						maxlength="10" style="width:150px" />
+
+					<p:selectOneMenu value="#{demandaBean.btpDemanda.demFlgExtra}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="situacaoExtra"
+							itemLabel="#{situacaoExtra.nomeAmigavel}"
+							itemValue="#{situacaoExtra}" value="#{demandaBean.lstSituacao}" />
+					</p:selectOneMenu>
+
+
+					<p:selectOneMenu
+						value="#{demandaBean.btpDemanda.demFlgExibirChamado}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="situacao" itemLabel="#{situacao.nomeAmigavel}"
+							itemValue="#{situacao}" value="#{demandaBean.lstSituacao}" />
+
+						<p:ajax update="panelAlterarCasotabs" />
+
+					</p:selectOneMenu>
+				</p:panelGrid>
+				<br />
+				<p:panelGrid id="panelAlterarCasotabs" columns="2"
+					style="width:100%; height:200px;">
+					<p:tabView id="testeTabView">
+						<p:tab title="Comunicado"
+							rendered="#{demandaBean.btpDemanda.demFlgExibirChamado.letra==1}"
+							id="tabChamadoAlt">
+							<div style="height: 200px;">
+								<h:panelGrid columns="2" cellpadding="5">
+									<p:inputTextarea
+										value="#{demandaBean.btpDemanda.demDscChamado}" cols="100"
+										rows="08" autoResize="false" />
+								</h:panelGrid>
+							</div>
+						</p:tab>
+						<p:tab title="Dados de Entrada">
+							<div style="height: 200px;">
+								<h:panelGrid columns="2" cellpadding="5">
+									<p:inputTextarea
+										value="#{demandaBean.btpDemanda.demDscEntradas}" cols="100"
+										rows="08" autoResize="false" />
+								</h:panelGrid>
+							</div>
+						</p:tab>
+						<p:tab title="Critérios de Aceitação">
+							<div style="height: 200px;">
+
+								<h:panelGrid columns="2" cellpadding="5">
+									<p:inputTextarea
+										value="#{demandaBean.btpDemanda.demCritAceitacao}" cols="100"
+										rows="08" autoResize="false" />
+								</h:panelGrid>
+
+							</div>
+						</p:tab>
+						<p:tab title="Metodologia de Testes">
+							<div style="height: 200px;">
+								<h:panelGrid columns="2" cellpadding="5">
+									<p:inputTextarea
+										value="#{demandaBean.btpDemanda.demDscProcedimento}"
+										cols="100" rows="08" autoResize="false" />
+								</h:panelGrid>
+							</div>
+						</p:tab>
+						<p:tab title="Observação">
+							<div style="height: 200px;">
+								<h:panelGrid columns="2" cellpadding="10">
+									<p:inputTextarea
+										value="#{demandaBean.btpDemanda.demDscObservacao}" cols="100"
+										rows="08" autoResize="false" />
+								</h:panelGrid>
+							</div>
+						</p:tab>
+
+					</p:tabView>
+				</p:panelGrid>
+
+
+				<p:dataTable var="instrucao" style="margin-top: 10px;"
+					rendered="#{demandaBean.btpDemanda.lstSQLs.size()>0}"
+					value="#{demandaBean.btpDemanda.lstSQLs}" id="tableLstSql"
+					selection="#{demandaBean.btpInstrucaoSQL}"
+					rowKey="#{instrucao.insSeqInstrucao}">
+
+					<p:column headerText="Ações" style="width:50px; height:36px;">
+						<p:commandLink title="Excluir"
+							oncomplete="confirmationInstrucao.show()" immediate="true">
+							<p:graphicImage value="./images/del.png" width="25px"
+								style="padding-left:10px" />
+							<f:setPropertyActionListener
+								target="#{demandaBean.btpInstrucaoSQL}" value="#{instrucao}" />
+						</p:commandLink>
+						<p:commandLink title="Visualizar"
+							actionListener="#{instrucaoBean.downloadSQL(instrucao)}"
+							immediate="true" ajax="false">
+							<p:graphicImage value="./images/sql.png" width="25px"
+								style="padding-left:10px" />
+						</p:commandLink>
+
+					</p:column>
+
+					<p:column headerText="Data de Inclusão">
+						<h:outputText value="#{instrucao.insDtaCadastro}">
+							<f:convertDateTime pattern="dd/MM/YYYY HH:mm:ss" timeZone="GMT-3" />
+						</h:outputText>
+					</p:column>
+
+					<p:column headerText="Usuário">
+						<h:outputText value="#{instrucao.usuSeqUsuario}" />
+					</p:column>
+					<p:column headerText="Execução" style="width:100px">
+						<h:outputText value="#{instrucao.insMomentoExecucao.valor}" />
+					</p:column>
+
+					<p:column headerText="Script"
+						style="white-space:normal; text-align:justify; width:350px">
+						<h:outputText value="#{instrucao.insDscObjetivo}" />
+					</p:column>
+
+				</p:dataTable>
+
+
+			</p:dialog>
+
+
+		</h:form>
+
+		<h:form id="formExcluir">
+
+			<p:confirmDialog id="Excluir" closeOnEscape="true"
+				message="Confirma exclusão do registro do SGD #{demandaBean.btpDemanda.demNumSGD}?"
+				header="Excluir" severity="alert" widgetVar="confirmationCaso">
+
+				<p:commandButton value="Sim" type="submit" immediate="true"
+					styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+					actionListener="#{demandaBean.excluir}"
+					onclick="confirmation.hide()"
+					update=":formPrincipal:tableLst, :formPrincipal:message" />
+
+				<p:commandButton value="Não" type="button"
+					styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+					onclick="confirmation.hide()" />
+
+			</p:confirmDialog>
+		</h:form>
+
+
+	</div>
+	<h:form id="formExcluirInstrucao">
+		<p:confirmDialog id="Excluir" closeOnEscape="true"
+			message="Confirma exclusão da Instrucao ?" header="Excluir"
+			severity="alert" widgetVar="confirmationInstrucao">
+
+			<p:commandButton value="Sim"
+				actionListener="#{demandaBean.excluirInstrucaoSQL}"
+				oncomplete="confirmationInstrucao.hide()"
+				update=":formAlterar:tableLstSql" />
+
+			<p:commandButton value="Não" type="button"
+				styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+				onclick="confirmationInstrucao.hide()" />
+
+		</p:confirmDialog>
+	</h:form>
+
+</h:body>
+
+</html>

@@ -1,0 +1,480 @@
+package auxiliares;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.mail.MessagingException;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.support.PageFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import pages.AcessoPage;
+import pages.AtendimentoPage;
+import pages.ItemAtendimentoPage;
+import pages.MenuPage;
+import pages.validacao.ValidacaoAtendimento;
+import servicos.ServicoPadrao;
+import testlink.api.java.client.TestLinkAPIException;
+import testlink.api.java.client.TestLinkAPIResults;
+import enumerators.EnumServico;
+import enumerators.EnumTipoErro;
+import enumerators.EnumTipoExecucao;
+import enumerators.EnumTipoExecucaoServico;
+import enumerators.EnumTipoPagamento;
+import excessoes.RegistrosInexistenteNaTeaException;
+import frames.FramePesquisaLogradouroPage;
+import frames.FramePrincipalPage;
+
+public class ServiceTestBase extends BaseVars
+
+{
+
+	private Class<?> classe;
+
+	private Object obj;
+
+	private ServicoPadrao servicoPadrao;
+
+	public ServicoPadrao getServicoPadrao() {
+		return servicoPadrao;
+	}
+
+	public ServiceTestBase(Class<?> classe) {
+		this.classe = classe;
+	}
+
+	private void acessarAtendimento()
+
+	{
+
+		AcessoPage.setUsuarioLogado(servicoPadrao.getUsuario());
+
+		menuPage = AcessoPage.logar();
+
+	}
+
+	public static void inicializarPages() {
+
+		acessoPage = PageFactory.initElements(DriverUtils.getDriver(),
+				AcessoPage.class);
+
+		framePrincipal = PageFactory.initElements(DriverUtils.getDriver(),
+				FramePrincipalPage.class);
+
+		atendimentoPage = PageFactory.initElements(DriverUtils.getDriver(),
+				AtendimentoPage.class);
+
+	}
+
+	@BeforeMethod
+	public void setUp() throws ClassNotFoundException, SQLException,
+			IOException, MessagingException, TestLinkAPIException
+
+	{
+		try {
+
+			configurar(classe);
+
+		} catch (RegistrosInexistenteNaTeaException e)
+
+		{
+
+			servicoPadrao.getResultado().preencherErro(e.getCause(),
+					EnumTipoErro.TEA);
+
+		} catch (NoSuchElementException elementException) {
+
+			servicoPadrao.getResultado().preencherErro(
+					elementException.getCause(), EnumTipoErro.LOCATION);
+
+		} catch (org.openqa.selenium.TimeoutException timeException) {
+
+			servicoPadrao.getResultado().preencherErro(
+					timeException.getCause(), EnumTipoErro.TIMEOUT);
+
+		} catch (com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException mySQLSyntaxErrorException) {
+			servicoPadrao.getResultado().preencherErro(
+					mySQLSyntaxErrorException.getCause(), EnumTipoErro.MYSQL);
+		} catch (Throwable ex) {
+
+			servicoPadrao.getResultado().preencherErro(ex.getCause(),
+					EnumTipoErro.NAO_DEFINIDO);
+
+		} finally {
+
+			if (servicoPadrao.getResultado().getResultado()
+					.equals(TestLinkAPIResults.TEST_FAILED)) {
+				ValidacaoAtendimento validacao = servicoPadrao.getValidacao();
+				if (validacao == null) {
+					validacao = new ValidacaoAtendimento();
+				}
+				validacao.validarTeste(servicoPadrao);
+			}
+		}
+	}
+
+	@SuppressWarnings("static-access")
+	@Test(alwaysRun = true)
+	public void executar() throws ClassNotFoundException, SQLException,
+			IOException, MessagingException {
+
+		if (servicoPadrao.isExecutarSolicitacao()) {
+
+			try {
+
+				menuPage.atendimentoCentralizado();
+
+				solicitarServico();
+
+			} catch (AssertionError erroAssert) {
+
+				servicoPadrao.getResultado().preencherErro(
+						erroAssert.getCause(), EnumTipoErro.REGRA_NEGOCIO);
+
+			} catch (NoSuchElementException elementException) {
+
+				servicoPadrao.getResultado().preencherErro(
+						elementException.getCause(), EnumTipoErro.LOCATION);
+
+			} catch (org.openqa.selenium.TimeoutException timeException) {
+
+				servicoPadrao.getResultado().preencherErro(
+						timeException.getCause(), EnumTipoErro.TIMEOUT);
+
+			} catch (Throwable e) {
+				servicoPadrao.getResultado().preencherErro(e.getCause(),
+						EnumTipoErro.NAO_DEFINIDO);
+
+			} finally {
+
+				servicoPadrao.getValidacao().validarTeste(servicoPadrao);
+
+			}
+		}
+	}
+
+	@AfterMethod
+	public void afterMethod() {
+
+		DriverUtils.fecharDriver();
+		
+	}
+
+	private void executarBaixa() throws Exception {
+
+		if (servicoPadrao.isExigeBaixa()) {
+			MenuPage.itemAtendimento();
+
+			ItemAtendimentoPage itemAtendimentoPage = PageFactory.initElements(
+					DriverUtils.getDriver(), ItemAtendimentoPage.class);
+
+			for (EnumServico service : servicoPadrao.getServicos()) {
+
+				DriverUtils.limparCampo(ItemAtendimentoPage.codServico);
+
+				DriverUtils.limparCampo(ItemAtendimentoPage.txtNrAtendimento);
+
+				DriverUtils.escrever(ItemAtendimentoPage.txtNrAtendimento,
+						servicoPadrao.getNrAtendimento());
+
+				DriverUtils.escrever(ItemAtendimentoPage.codServico, service
+						.getCodigo().toString());
+
+				DriverUtils.clicar(ItemAtendimentoPage.btnConsultar);
+
+				DriverUtils.esperarPorAjax();
+
+				if (!itemAtendimentoPage.lblSituacaoServico.getText().trim()
+						.equals("SOLICITAÇÃO CONCLUÍDA")) {
+					itemAtendimentoPage.inicializarBaixa();
+
+					Class<?> classe2 = service.getClasse();
+
+					Object obj = classe2.newInstance();
+
+					Method metodoInvocado;
+
+					Object[] parametro = { servicoPadrao };
+
+					Class<?> params[] = new Class[parametro.length];
+
+					for (int i = 0; i < parametro.length; i++) {
+						if (parametro[i] instanceof ServicoPadrao) {
+							params[i] = servicoPadrao.getClass();
+						}
+					}
+
+					metodoInvocado = classe2.getMethod("preencherDadosBaixa",
+							params);
+
+					metodoInvocado.invoke(obj, parametro);
+
+					itemAtendimentoPage.finalizarBaixa();
+
+				}
+			}
+
+		}
+
+	}
+
+	/**
+	 * CONFIGURADOR DO SERVICO
+	 * 
+	 * @param servicoPai
+	 * @param servicoFilho
+	 * @param usuario
+	 * @param gerarParInscricao
+	 * @throws InterruptedException
+	 * @throws CasoDeTesteNaoInformadoException
+	 * @throws RegistrosInexistenteNaTeaException
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 * @throws NumberFormatException
+	 */
+	public void configurar(Class<?> classe)
+			throws RegistrosInexistenteNaTeaException, NumberFormatException,
+			ClassNotFoundException, SQLException {
+
+		servicoPadrao = new ServicoPadrao(classe);
+
+		servicoPadrao.setExecutarSolicitacao(false);
+
+		EnumTipoExecucao tipoExecucao = servicoPadrao.getResultado()
+				.getProjeto().getExecucao();
+
+		if (tipoExecucao.equals(EnumTipoExecucao.TODOS)
+				|| (ConnectJDBC.verificarStatusExecucao(
+						servicoPadrao.getCasoTeste().substring(0, 12),
+						servicoPadrao.getResultado().getProjeto())
+						.getTipoexec().equals(tipoExecucao))) {
+
+			servicoPadrao.setExecutarSolicitacao(true);
+
+			switch (servicoPadrao.getEnumTipoServico()) {
+			case IMOVEL:
+
+				List<String> inscricoes = new ArrayList<String>();
+				if (!servicoPadrao.isInscricaoTeste()) {
+					inscricoes = ConnectJDBC.gerarInscricao(servicoPadrao);
+				} else {
+					inscricoes.add(servicoPadrao.getInscOrigem());
+				}
+				if (inscricoes.size() == 0) {
+					throw new RegistrosInexistenteNaTeaException(
+							"Tabela Tea sem registro para o serviço");
+				}
+
+				servicoPadrao.setInscOrigem(inscricoes.get(0));
+
+				servicoPadrao.setQtdContratoOrigem(ConnectJDBC
+						.verificarQtdContratos(inscricoes.get(0).toString()));
+
+				if (servicoPadrao.isGerarPar()) {
+
+					servicoPadrao.setInscDestino(inscricoes.get(1));
+
+					servicoPadrao
+							.setQtdContratosDestino(ConnectJDBC
+									.verificarQtdContratos(inscricoes.get(1)
+											.toString()));
+
+				}
+
+				break;
+			case CLIENTE:
+
+				servicoPadrao.setCpfCnpj(ConnectJDBC
+						.gerarCpfCnpj(servicoPadrao));
+
+				servicoPadrao.setQtdContratoOrigem(ConnectJDBC
+						.verificarQtdContratosCpfCnpj(servicoPadrao
+								.getCpfCnpj()));
+
+				break;
+
+			default:
+				break;
+			}
+
+			acessarAtendimento();
+		}
+	}
+
+	private void invocarMetodoReflexao(String metodo) throws Exception {
+
+		try {
+
+			Method metodoInvocado;
+
+			Object[] parametro = { servicoPadrao };
+
+			Class<?> params[] = new Class[parametro.length];
+
+			for (int i = 0; i < parametro.length; i++) {
+				if (parametro[i] instanceof ServicoPadrao) {
+					params[i] = servicoPadrao.getClass();
+				}
+			}
+
+			metodoInvocado = classe.getDeclaredMethod(metodo, params);
+
+			metodoInvocado.invoke(obj, parametro);
+		} catch (NoSuchMethodException e) {
+			classe.getMethod(metodo).invoke(obj);
+
+		}
+
+	}
+
+	/**
+	 * Método responsável pela execução dos serviços
+	 * 
+	 * @throws Exception
+	 */
+
+	@SuppressWarnings("static-access")
+	private void solicitarServico() throws Exception {
+		servicoPadrao.isExecutarSolicitacao();
+
+		classe = servicoPadrao.getServicos().get(0).getClasse();
+
+		obj = classe.newInstance();
+
+		invocarMetodoReflexao("preAtendimento");
+
+		switch (servicoPadrao.getEnumTipoServico()) {
+		case CLIENTE:
+
+			FramePrincipalPage.preencherCpfCnpj(servicoPadrao);
+
+			break;
+
+		case LOGRADOURO:
+
+			break;
+
+		case IMOVEL:
+
+		default:
+
+			framePrincipal.preencherInscricao(servicoPadrao.getInscOrigem()
+					.toString(), servicoPadrao.getQtdContratoOrigem());
+
+			break;
+
+		}
+
+		if ((servicoPadrao.getInscOrigem() != null)
+				&& ConnectJDBC.getServicoPendente(
+						Integer.parseInt(servicoPadrao.getInscOrigem()),
+						servicoPadrao.getServicos())) {
+
+			atendimentoPage.cancelarServicosPendentes(servicoPadrao
+					.getServicos());
+
+		}
+
+		if ((servicoPadrao.getTiposPgtos().contains(
+				EnumTipoPagamento.PARCELADO_COM_ENTRADA) || servicoPadrao
+				.getTiposPgtos().contains(
+						EnumTipoPagamento.PARCELADO_SEM_ENTRADA))) {
+
+			AtendimentoPage.exibirSituacaoFinanceira();
+
+			servicoPadrao.getValidacao().verificarLancamentoFuturo(
+					servicoPadrao.getInscOrigem(), servicoPadrao.getServicos(),
+					servicoPadrao.getItemLAF());
+
+		}
+
+		framePrincipal.iniciarAtendimento();
+
+		atendimentoPage.informarServico(servicoPadrao.getServicos().get(0)
+				.getCodigo().toString());
+
+		if (servicoPadrao.getEnumTipoServico().equals(
+				EnumTipoExecucaoServico.LOGRADOURO)) {
+
+			FramePesquisaLogradouroPage.consultarEndereco();
+
+		}
+
+		invocarMetodoReflexao("preValidar");
+
+		if (servicoPadrao.isExecutarSolicitacao()) {
+
+			itemAtendimentoPage = PageFactory.initElements(
+					DriverUtils.getDriver(), ItemAtendimentoPage.class);
+
+			invocarMetodoReflexao("preencherDadosComplementares");
+
+			atendimentoPage.executarTipoPagamento(servicoPadrao.getTiposPgtos()
+					.get(0), servicoPadrao.getValidacao());
+
+			framePrincipal.verificarDebito();
+
+			if (!servicoPadrao.isMovimentaFatura()) {
+				salvar();
+			}
+
+			// INTEGRAÇÃO
+
+			invocarMetodoReflexao("executarIntegracao");
+
+			if (servicoPadrao.isMovimentaFatura()) {
+				salvar();
+			}
+
+			if (servicoPadrao.isExecutarSolicitacao()) {
+
+				invocarMetodoReflexao("confirmarAtendimento");
+
+				// SERVICO CASADO
+				if (servicoPadrao.getServicos().size() > 1)
+
+				{
+
+					atendimentoPage.confirmarServicoCasado(servicoPadrao
+							.getTiposPgtos().get(1), servicoPadrao
+							.getValidacao());
+
+				}
+				if (servicoPadrao.isExecutarSolicitacao()) {
+
+					atendimentoPage.naoRegistrarMaisAtendimento(servicoPadrao);
+
+					invocarMetodoReflexao("validarRegistroAtendimento");
+
+					executarBaixa();
+
+					invocarMetodoReflexao("validarRegistroBaixa");
+
+					servicoPadrao.getValidacao().validarTipoPagamento(
+							servicoPadrao);
+
+					invocarMetodoReflexao("verificar");
+
+				}
+			}
+		}
+
+	}
+
+	private void salvar() {
+		if (DriverUtils.getDriver().findElements(By.id(Atendimento.BTN_SALVAR))
+				.size() > 0) {
+
+			DriverUtils.clicar(AtendimentoPage.btnSalvar);
+
+			DriverUtils.esperarPorAjax();
+		}
+	}
+}

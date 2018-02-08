@@ -1,0 +1,18 @@
+package br.com.cagece.prax.automatizacao.srv021;
+
+import anotations.CasoDeTesteServico;
+import auxiliares.ServiceTestBase;
+import enumerators.EnumServico;
+import enumerators.EnumTipoLaudo;
+import enumerators.EnumTipoPagamento;
+
+@CasoDeTesteServico(id = "CT02", servico = EnumServico.VERIFICACAO_CONSUMO_MEDIDO, tipoPgto = EnumTipoPagamento.PARCELADO_SEM_ENTRADA, 
+executarBaixa = true, complemento = "IMPROCEDENTE", laudo = EnumTipoLaudo.IMPROCEDENTE)
+public class Srv021VerificacaoConsumoMedidoImprocedente extends ServiceTestBase
+{
+
+	public Srv021VerificacaoConsumoMedidoImprocedente()
+	{
+		super(Srv021VerificacaoConsumoMedidoImprocedente.class);
+	}
+}

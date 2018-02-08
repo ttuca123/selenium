@@ -1,0 +1,604 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html">
+
+
+<h:head>
+	<link rel="stylesheet" type="text/css" href="css/plataforma.css" />
+
+</h:head>
+
+<h:body>
+	<div style="width: 40px; float: left">
+		<h:form id="formMenu">
+			<a href="index.xhtml"> <p:graphicImage value="./images/home.png"
+					width="30px" style="padding-left:10px" />
+			</a>
+		</h:form>
+	</div>
+
+	<div style="padding: 0px 50px 0px 50px;">
+		<h:form id="formPrincipal">
+
+			<p:growl id="message" showDetail="true" />
+
+			<div style="height: 50px">
+				<p:panelGrid id="panelSelect" columns="6">
+					<h:outputText value="Sistema" />
+					<p:selectOneMenu value="#{versaoBean.btpSistema}" immediate="true"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="TODOS" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+							itemValue="#{sistema}" value="#{versaoBean.lstSistemas}" />
+						<f:attribute name="itens" value="#{versaoBean.lstSistemas}" />
+						<p:ajax update="tableLst" />
+					</p:selectOneMenu>
+
+					<h:outputText value="Situação:" />
+					<p:selectOneMenu value="#{versaoBean.enumStatusVersao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItem itemLabel="TODOS" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="statusVer" itemLabel="#{statusVer.valor}"
+							itemValue="#{statusVer}" value="#{versaoBean.lstStatusVersao}" />
+						<p:ajax update="tableLst" />
+					</p:selectOneMenu>
+
+					<h:outputText value="Ignorar Publicadas" />
+					<p:selectBooleanCheckbox value="#{versaoBean.ignorarPublicadas}">
+						<p:ajax update="tableLst" />
+					</p:selectBooleanCheckbox>
+
+				</p:panelGrid>
+
+			</div>
+
+			<p:dataTable var="versao" value="#{versaoBean.versaoList}"
+				paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+				id="tableLst" paginator="true" rows="14"
+				filteredValue="#{versaoBean.versoesFiltradas}"
+				selection="#{versaoBean.btpVersao}" rowKey="#{versao.id}">
+
+				<p:ajax event="rowSelect" update=":formAlterar" />
+
+				<f:facet name="header">CRONOGRAMA DE VERSÕES</f:facet>
+
+				<p:column headerText="AÇÕES" style="width:50px; height:36px;">
+
+
+					<p:graphicImage value="./images/md5-icon.png" width="27px"
+						rendered="#{versao.situacao.numero == 2 and versao.verDscMd5.length()>0 or versao.situacao.numero == 3 and versao.verDscMd5.length()>0}"
+						title=" MD5 #{versao.verDscMd5}" />
+
+
+					<p:commandLink title="Alterar" update=":formAlterar:Alterar"
+						oncomplete="dialogAlterar.show()" immediate="true"
+						rendered="#{versao.situacao.numero != 2 and versao.situacao.numero != 3}"
+						actionListener="#{versaoBean.selecionar}">
+						<p:graphicImage value="./images/edit.png" width="25px" />
+						<f:setPropertyActionListener target="#{versaoBean.btpVersao}"
+							value="#{versao}" />
+					</p:commandLink>
+
+					<p:commandLink title="Excluir" update=":formExcluir:Excluir"
+						rendered="#{versao.situacao.numero le 1 and versao.situacao.numero != 3}"
+						oncomplete="confirmationCaso.show()" immediate="true">
+						<p:graphicImage value="./images/del.png" width="25px"
+							style="padding-left:10px" />
+						<f:setPropertyActionListener target="#{versaoBean.btpVersao}"
+							value="#{versao}" />
+					</p:commandLink>
+
+					<p:commandLink title="Instrução SQL"
+						actionListener="#{versaoBean.downloadSQL(versao)}" ajax="false"
+						rendered="#{versao.situacao.numero le 1 and versao.situacao.numero != 3}">
+						<p:graphicImage value="./images/sql.png" width="27px"
+							style="padding-left:10px" />
+						<f:setPropertyActionListener target="#{versaoBean.btpVersao}"
+							value="#{versao}" />
+					</p:commandLink>
+
+					<p:commandLink title="Chamado de Mudança"
+						actionListener="#{versaoBean.gerarChamadoMudanca(versao)}"
+						ajax="false" rendered="#{versao.situacao.numero == 5}">
+						<p:graphicImage value="./images/img4.png" width="27px"
+							rendered="#{versao.abrirChamadoMudanca}"
+							style="padding-left:10px" />
+						<f:setPropertyActionListener target="#{versaoBean.btpVersao}"
+							value="#{versao}" />
+					</p:commandLink>
+
+				</p:column>
+
+				<p:column filterBy="#{versao.verIdVersao}" style="width:100px"
+					filterMatchMode="contains" filterStyle="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Nº da Versão" />
+					</f:facet>
+					<p:graphicImage value="./images/l_normal.png" width="20px"
+						style="padding-right:10px;" title="${versao.tipoVersao.valor}"
+						rendered="#{versao.tipoVersao.valor=='NORMAL'}" />
+
+					<p:graphicImage value="./images/l_emergencial.png" width="20px"
+						style="padding-right:10px;" title="${versao.tipoVersao.valor}"
+						rendered="#{versao.tipoVersao.valor!='NORMAL'}" />
+
+					<h:outputText value="#{versao.verIdVersao}"
+						class="versao${versao.tipoVersao.valor}" />
+
+					<h:outputText value=" #{versao.verDscCompl}"
+						class="versao${versao.tipoVersao.valor}" />
+
+					<h:outputText value=" R" rendered="#{versao.verFlgReversao}"
+						class="versao${versao.tipoVersao.valor}" />
+
+
+				</p:column>
+
+
+				<p:column filterBy="#{versao.btpSistema.sisNomSistema}"
+					headerText="Sistema" style="width:250px" filterMatchMode="contains"
+					filterStyle="width:250px">
+					<f:facet name="header">
+						<h:outputText value="Sistema" />
+					</f:facet>
+					<h:outputText value="#{versao.btpSistema.sisNomSistema}" />
+				</p:column>
+
+
+
+				<p:column headerText="DESENVOLVIMENTO">
+					<h:outputText value="#{versao.verDtaIniDesen}">
+						<f:convertDateTime pattern="dd/MM" timeZone="GMT-3" />
+					</h:outputText> a
+					<h:outputText value="#{versao.verDtaFimDesen}">
+						<f:convertDateTime pattern="dd/MM/YYYY" timeZone="GMT-3" />
+					</h:outputText>
+				</p:column>
+				<p:column headerText="TESTES">
+					<h:outputText value="#{versao.verDtaIniTestes}">
+						<f:convertDateTime pattern="dd/MM" timeZone="GMT-3" />
+					</h:outputText> a
+					<h:outputText value="#{versao.verDtaFimTestes}">
+						<f:convertDateTime pattern="dd/MM/YYYY" timeZone="GMT-3" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="PUBLICAÇÃO">
+					<h:outputText value="#{versao.verDtaIniPublic}">
+						<f:convertDateTime pattern="dd/MM/YYYY" timeZone="GMT-3" />
+					</h:outputText>
+					<br />Das
+					<h:outputText value="#{versao.verDtaIniPublic}">
+						<f:convertDateTime pattern="HH:mm:ss" timeZone="GMT-3" />
+					</h:outputText> às
+					<h:outputText value="#{versao.verDtaFimPublic}">
+						<f:convertDateTime pattern="HH:mm:ss" timeZone="GMT-3" />
+					</h:outputText>
+				</p:column>
+
+
+				<p:column headerText="EXECUÇÃO">
+					<h:outputText value="#{versao.execucao.valor}" />
+				</p:column>
+
+				<p:column headerText="BL">
+					<h:outputText value="#{versao.verNrTeste}" />
+				</p:column>
+
+				<p:column filterBy="#{versao.situacao.valor}" headerText="SITUAÇÃO"
+					filterMatchMode="contains">
+					<h:outputText value="#{versao.situacao.valor}" />
+				</p:column>
+
+			</p:dataTable>
+			<br />
+
+			<p:commandButton value="Nova Versão" id="cadastrar"
+				actionListener="#{versaoBean.novo}"
+				oncomplete="dialogCadastrar.show()" />
+
+		</h:form>
+
+		<h:form id="formCadastrar">
+			<p:dialog header="Nova Versão" widgetVar="dialogCadastrar"
+				closeOnEscape="true" modal="true" resizable="false"
+				id="dialogCadastrar">
+				<p:commandButton value="Salvar"
+					actionListener="#{versaoBean.inserir}"
+					update=":formPrincipal:tableLst" onclick="dialogCadastrar.hide()" />
+
+				<p:panelGrid columns="4" style="margin-top:10px;">
+					<h:outputText value="Sistema" />
+					<p:selectOneMenu value="#{versaoBean.btpVersao.btpSistema}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+							itemValue="#{sistema}" value="#{versaoBean.lstSistemas}" />
+						<f:attribute name="itens" value="#{versaoBean.lstSistemas}" />
+					</p:selectOneMenu>
+
+					<h:outputText value="Md5Sum:" />
+					<p:inputText value="#{versaoBean.btpVersao.verDscMd5}"
+						maxlength="32" style="width:300px" />
+
+					<h:outputText value="Nr. da Versão:" />
+					<p:inputText value="#{versaoBean.btpVersao.verIdVersao}"
+						maxlength="8" style="width:300px" />
+
+					<h:outputText value="Complemento:" />
+					<p:inputText value="#{versaoBean.btpVersao.verDscCompl}"
+						maxlength="10" style="width:300px" />
+
+					<p:outputLabel for="popupDatalancamentoA"
+						value="Previsão Início Publicaçao:" />
+					<p:calendar id="popupDatalancamentoA"
+						value="#{versaoBean.btpVersao.verDtaIniPublic}"
+						pattern="dd/MM/yyyy HH:mm:ss" />
+
+					<p:outputLabel for="popupDatalancamentoB"
+						value="Previsão Fim Publicação:" />
+					<p:calendar id="popupDatalancamentoB"
+						value="#{versaoBean.btpVersao.verDtaFimPublic}"
+						pattern="dd/MM/yyyy HH:mm:ss" />
+
+
+					<p:outputLabel for="ativoAfetado" value="Ativo Afetado:" />
+					<p:selectOneMenu id="ativoAfetado"
+						value="#{versaoBean.btpVersao.enumAtivoAfetado}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItem itemLabel="Nenhum Ativo Afetado" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="ativo" itemLabel="#{ativo.nomeAmigavel}"
+							itemValue="#{ativo}" value="#{versaoBean.lstAtivoAfetado}" />
+					</p:selectOneMenu>
+
+
+				</p:panelGrid>
+				<br />
+				<p:panelGrid columns="4">
+
+					<p:outputLabel for="popupData" value="Inicio Desenvolvimento:" />
+					<p:outputLabel for="popupDatalancamentoA"
+						value="Fim Desenvolvimento:" />
+					<p:outputLabel for="popupData" value="Inicio Testes:" />
+					<p:outputLabel for="popupDatalancamentoA" value="Fim Testes:" />
+
+					<p:calendar value="#{versaoBean.btpVersao.verDtaIniDesen}"
+						pattern="dd/MM/yyyy" />
+
+					<p:calendar value="#{versaoBean.btpVersao.verDtaFimDesen}"
+						pattern="dd/MM/yyyy" />
+
+					<p:calendar id="popupData"
+						value="#{versaoBean.btpVersao.verDtaIniTestes}"
+						pattern="dd/MM/yyyy" />
+
+					<p:calendar id="popupDataFinal"
+						value="#{versaoBean.btpVersao.verDtaFimTestes}"
+						pattern="dd/MM/yyyy" />
+				</p:panelGrid>
+				<br />
+				<p:panelGrid columns="7">
+
+					<h:outputText value="Tipo de Versão" />
+					<h:outputText value="Tipo de Execução:" />
+					<h:outputText value="Retestes:" />
+					<h:outputText value="Situação:" />
+					<h:outputText value="Reportar?" />
+					<h:outputText value="Revertida?" />
+					<h:outputText value="Dashboard?" />
+
+					<p:selectOneMenu value="#{versaoBean.btpVersao.tipoVersao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipoVersao" itemLabel="#{tipoVersao.valor}"
+							itemValue="#{tipoVersao}" value="#{versaoBean.lstTipoVersao}" />
+					</p:selectOneMenu>
+
+
+					<p:selectOneMenu value="#{versaoBean.btpVersao.execucao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="execucao" itemLabel="#{execucao.valor}"
+							itemValue="#{execucao}" value="#{versaoBean.lstTipoExecucao}" />
+					</p:selectOneMenu>
+
+					<p:spinner value="#{versaoBean.btpVersao.verNrTeste}" min="1"
+						max="10" style="font-size:20px; width=30px;" size="5" />
+
+					<p:selectOneMenu value="#{versaoBean.btpVersao.situacao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="statusVersao"
+							itemLabel="#{statusVersao.valor}" itemValue="#{statusVersao}"
+							value="#{versaoBean.lstStatusVersao}" />
+					</p:selectOneMenu>
+
+					<p:selectBooleanCheckbox value="#{versaoBean.btpVersao.reportar}"
+						style="font-size:20px;" />
+
+
+					<p:selectBooleanCheckbox
+						value="#{versaoBean.btpVersao.verFlgReversao}"
+						style="font-size:20px;" />
+
+					<p:selectBooleanCheckbox
+						value="#{versaoBean.btpVersao.verFlgDashboard}"
+						style="font-size:20px;" />
+
+				</p:panelGrid>
+				<h:panelGrid columns="1" style="margin-top:10px">
+					<h:outputText value="Observação:" />
+					<p:inputTextarea value="#{versaoBean.btpVersao.observacao}"
+						cols="100" rows="3" autoResize="false" />
+				</h:panelGrid>
+
+				<h:panelGrid columns="1" style="margin-top:10px">
+					<h:outputText value="Riscos Associados:" />
+					<p:inputTextarea value="#{versaoBean.btpVersao.verDscRiscos}"
+						cols="100" rows="3" autoResize="false" />
+				</h:panelGrid>
+
+
+			</p:dialog>
+		</h:form>
+
+
+		<h:form id="formAlterar">
+			<p:dialog header="Alterar Registro" widgetVar="dialogAlterar"
+				closeOnEscape="true" modal="true" id="Alterar" dynamic="true"
+				resizable="false">
+
+				<p:commandButton value="Salvar"
+					actionListener="#{versaoBean.alterar}"
+					update=":formPrincipal:tableLst, :formPrincipal:message"
+					oncomplete="dialogAlterar.hide()" />
+				<br />
+				<p:panelGrid columns="4" style="margin-top:10px;">
+					<h:outputText value="Sistema" />
+					<p:selectOneMenu value="#{versaoBean.btpVersao.btpSistema}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+							itemValue="#{sistema}" value="#{versaoBean.lstSistemas}" />
+						<f:attribute name="itens" value="#{versaoBean.lstSistemas}" />
+					</p:selectOneMenu>
+
+					<h:outputText value="MD5:" />
+					<p:inputText value="#{versaoBean.btpVersao.verDscMd5}"
+						maxlength="32" style="width:300px" />
+
+					<h:outputText value="Nr. da Versão:" />
+					<p:inputText value="#{versaoBean.btpVersao.verIdVersao}"
+						maxlength="8" style="width:300px" />
+
+					<h:outputText value="Complemento:" />
+					<p:inputText value="#{versaoBean.btpVersao.verDscCompl}"
+						maxlength="10" style="width:300px" />
+
+
+					<p:outputLabel for="popupDatalancamentoA"
+						value="Previsão Início Publicaçao:" />
+					<p:calendar id="popupDatalancamentoA"
+						value="#{versaoBean.btpVersao.verDtaIniPublic}"
+						pattern="dd/MM/yyyy HH:mm:ss" />
+
+					<p:outputLabel for="popupDatalancamentoB"
+						value="Previsão Fim Publicação:" />
+					<p:calendar id="popupDatalancamentoB"
+						value="#{versaoBean.btpVersao.verDtaFimPublic}"
+						pattern="dd/MM/yyyy HH:mm:ss" />
+
+					<p:outputLabel for="ativoAfetado" value="Ativo Afetado:" />
+					<p:selectOneMenu id="ativoAfetado"
+						value="#{versaoBean.btpVersao.enumAtivoAfetado}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItem itemLabel="Nenhum Ativo Afetado" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="ativo" itemLabel="#{ativo.nomeAmigavel}"
+							itemValue="#{ativo}" value="#{versaoBean.lstAtivoAfetado}" />
+					</p:selectOneMenu>
+
+				</p:panelGrid>
+				<br />
+				<p:panelGrid columns="4">
+
+					<p:outputLabel for="popupData" value="Inicio Desenvolvimento:" />
+					<p:outputLabel for="popupDatalancamentoA"
+						value="Fim Desenvolvimento:" />
+					<p:outputLabel for="popupData" value="Inicio Testes:" />
+					<p:outputLabel for="popupDatalancamentoA" value="Fim Testes:" />
+
+					<p:calendar value="#{versaoBean.btpVersao.verDtaIniDesen}"
+						pattern="dd/MM/yyyy" />
+
+					<p:calendar value="#{versaoBean.btpVersao.verDtaFimDesen}"
+						pattern="dd/MM/yyyy" />
+
+					<p:calendar id="popupData"
+						value="#{versaoBean.btpVersao.verDtaIniTestes}"
+						pattern="dd/MM/yyyy" />
+
+					<p:calendar id="popupDataFinal"
+						value="#{versaoBean.btpVersao.verDtaFimTestes}"
+						pattern="dd/MM/yyyy" />
+				</p:panelGrid>
+				<br />
+				<p:panelGrid columns="7">
+
+					<h:outputText value="Tipo de Versão" />
+					<h:outputText value="Tipo de Execução:" />
+					<h:outputText value="Retestes:" />
+					<h:outputText value="Situação:" />
+					<h:outputText value="Reportar?" />
+					<h:outputText value="Revertida?" />
+					<h:outputText value="Dashboard?" />
+					
+
+					<p:selectOneMenu value="#{versaoBean.btpVersao.tipoVersao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipoVersao" itemLabel="#{tipoVersao.valor}"
+							itemValue="#{tipoVersao}" value="#{versaoBean.lstTipoVersao}" />
+					</p:selectOneMenu>
+
+
+					<p:selectOneMenu value="#{versaoBean.btpVersao.execucao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="execucao" itemLabel="#{execucao.valor}"
+							itemValue="#{execucao}" value="#{versaoBean.lstTipoExecucao}" />
+					</p:selectOneMenu>
+
+					<p:spinner value="#{versaoBean.btpVersao.verNrTeste}" min="1"
+						max="10" style="font-size:20px; width=30px;" size="5" />
+
+					<p:selectOneMenu value="#{versaoBean.btpVersao.situacao}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="statusVersao"
+							itemLabel="#{statusVersao.valor}" itemValue="#{statusVersao}"
+							value="#{versaoBean.lstStatusVersao}" />
+					</p:selectOneMenu>
+
+					<p:selectBooleanCheckbox value="#{versaoBean.btpVersao.reportar}"
+						style="font-size:20px;" />
+
+					<p:selectBooleanCheckbox
+						value="#{versaoBean.btpVersao.verFlgReversao}"
+						style="font-size:20px;" />
+						
+											<p:selectBooleanCheckbox
+						value="#{versaoBean.btpVersao.verFlgDashboard}"
+						style="font-size:20px;" />
+
+				</p:panelGrid>
+				<h:panelGrid columns="2" style="margin-top:10px;">
+					<h:outputText value="Observação:" />
+					<h:outputText value="Riscos Associados:" />
+					<p:inputTextarea value="#{versaoBean.btpVersao.observacao}"
+						cols="50" rows="5" autoResize="false" />
+
+
+					<p:inputTextarea value="#{versaoBean.btpVersao.verDscRiscos}"
+						cols="50" rows="5" autoResize="false" />
+				</h:panelGrid>
+
+
+				<br />
+				<div style="height: 300px;">
+					<p:dataTable var="dependencia"
+						value="#{versaoBean.lstDependencias}" id="tableLstDependencias"
+						selection="#{versaoBean.btpDependencia}"
+						rowKey="#{dependencia.vedSeqVersaoDependencia}">
+
+						<p:column headerText="Ações" style="width:50px; height:36px;">
+							<p:commandLink title="Excluir" update=":formExcluir:Excluir"
+								oncomplete="confirmationDepends.show()" immediate="true">
+								<p:graphicImage value="./images/del.png" width="25px"
+									style="padding-left:10px" />
+								<f:setPropertyActionListener
+									target="#{versaoBean.btpDependencia}" value="#{dependencia}" />
+							</p:commandLink>
+						</p:column>
+
+						<p:column headerText="Dependências de:" style="text-align:left;">
+						v<h:outputText value="#{dependencia.btpVersao.verIdVersao}" /> |
+							<h:outputText
+								value="#{dependencia.btpVersao.btpSistema.sisNomSistema}" />
+						</p:column>
+
+					</p:dataTable>
+					<br />
+					<p:commandButton value="Adicionar Dependência"
+						actionListener="#{versaoBean.novaDependencia}"
+						oncomplete="dialogCadastrarDepends.show()" />
+				</div>
+			</p:dialog>
+		</h:form>
+
+		<h:form id="formExcluir">
+
+			<p:confirmDialog id="Excluir" closeOnEscape="true"
+				message="Confirma exclusão do registro da Versão #{versaoBean.btpVersao.verIdVersao}?"
+				header="Excluir" severity="alert" widgetVar="confirmation">
+
+				<p:commandButton value="Sim" type="submit" immediate="true"
+					styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+					actionListener="#{versaoBean.excluir}"
+					onclick="confirmation.hide()"
+					update=":formPrincipal:tableLst, :formPrincipal:message" />
+
+				<p:commandButton value="Não" type="button"
+					styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+					onclick="confirmation.hide()" />
+
+			</p:confirmDialog>
+		</h:form>
+
+		<h:form id="formCadastrarDepends">
+			<p:dialog header="Nova Dependẽncia"
+				widgetVar="dialogCadastrarDepends" closeOnEscape="true" modal="true"
+				resizable="false" id="dialogCadastrarDepends">
+				<p:commandButton value="Salvar"
+					actionListener="#{versaoBean.inserirDependencia}"
+					update=":formAlterar:tableLstDependencias, :formPrincipal:message"
+					onclick="dialogCadastrarDepends.hide()" />
+
+				<p:panelGrid columns="2" style="margin-top:10px;">
+
+					<p:panelGrid columns="5">
+						<h:outputText value="Sistema" />
+						<p:selectOneMenu value="#{versaoBean.btpDependencia.btpSistema}"
+							immediate="true" converter="converterPadrao"
+							unselectedLabel="Selecione uma Opção" style="width:250px">
+							<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+								noSelectionOption="true" />
+							<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+								itemValue="#{sistema}" value="#{versaoBean.lstSistemas}" />
+							<f:attribute name="itens" value="#{versaoBean.lstSistemas}" />
+							<p:ajax update="versoes" />
+						</p:selectOneMenu>
+
+						<h:outputText value="Versão" />
+						<p:selectOneMenu value="#{versaoBean.btpDependencia.btpVersao}"
+							id="versoes" converter="converterPadrao"
+							unselectedLabel="Selecione uma Opção" style="width:250px">
+							<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+								noSelectionOption="true" />
+							<f:selectItems var="ver" itemLabel="#{ver.verIdVersao}"
+								itemValue="#{ver}" value="#{versaoBean.lstVersoes}" />
+							<f:attribute name="itens" value="#{versaoBean.lstVersoes}" />
+						</p:selectOneMenu>
+
+					</p:panelGrid>
+				</p:panelGrid>
+			</p:dialog>
+		</h:form>
+
+		<h:form id="formExcluirDepends">
+
+			<p:confirmDialog id="ExcluirDepends" closeOnEscape="true"
+				message="Confirma exclusão da Dependẽncia ?"
+				header="Excluir Dependẽncia" severity="alert"
+				widgetVar="confirmationDepends">
+
+				<p:commandButton value="Sim" type="submit" immediate="true"
+					styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+					actionListener="#{versaoBean.excluirDependencia}"
+					onclick="confirmationDepends.hide()"
+					update=":formAlterar:tableLstDependencias, :formPrincipal:message" />
+
+				<p:commandButton value="Não" type="button"
+					styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+					onclick="confirmationDepends.hide()" />
+
+			</p:confirmDialog>
+		</h:form>
+	</div>
+
+
+</h:body>
+
+</html>

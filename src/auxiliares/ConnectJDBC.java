@@ -1,0 +1,648 @@
+package auxiliares;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+import modelo.BtpProjeto;
+import modelo.ResultadoTest;
+
+import org.apache.commons.lang.StringUtils;
+
+import servicos.ServicoPadrao;
+import enumerators.EnumParametroGeral;
+import enumerators.EnumResultadoTeste;
+import enumerators.EnumServico;
+import enumerators.EnumSistema;
+import excessoes.RegistrosInexistenteNaTeaException;
+
+/**
+ * Classe auxiliar para Conexão com o banco de dados Oracle
+ * 
+ * @author 208396 - EVANDRO CUSTODIO GONCALVES [evandro.custodio@cagece.com.br]
+ *         05/06/2014 15:01
+ * 
+ */
+public class ConnectJDBC
+{
+
+	private static final String ORACLE_DRIVER = "oracle.jdbc.driver.OracleDriver";
+
+	private static final String MY_SQL_DRIVER = "com.mysql.jdbc.Driver";
+
+	private static final String URL_CONNECTION_PRAX = "jdbc:oracle:thin:@172.25.131.93:1521:prax";
+
+	private static final String DB_USER_PRAX = "prax";
+
+	private static final String DB_PASS_PRAX = "carga";
+
+	private static final String URL_CONNECTION_SGD = "jdbc:oracle:thin:@172.25.131.73:1521:CGORA2";
+
+	private static final String DB_USER_SGD = "APL_SGD";
+
+	private static final String DB_PASS_SGD = "sgdleitura";
+
+	public static final String TABELA_TEA = "TEA_TESTES_AUTOMATIZADO2";
+
+	private static final String URL_CONNECTION_MYSQL = "jdbc:mysql://172.25.131.59/testes_automatizados";
+
+	private static final String DB_USER_MYSQL = "root";
+
+	private static final String DB_PASS_MYSQL = "C@gece123";
+
+	private static PreparedStatement preparedStatement = null;
+
+	public Connection createConnectionPrax() throws ClassNotFoundException,
+			SQLException
+	{
+
+		Class.forName(ORACLE_DRIVER);
+
+		return DriverManager.getConnection(URL_CONNECTION_PRAX, DB_USER_PRAX,
+				DB_PASS_PRAX);
+	}
+
+	private Connection createConnectionMySql() throws ClassNotFoundException,
+			SQLException
+	{
+
+		Class.forName(MY_SQL_DRIVER);
+
+		return DriverManager.getConnection(URL_CONNECTION_MYSQL, DB_USER_MYSQL,
+				DB_PASS_MYSQL);
+	}
+
+	@SuppressWarnings("unused")
+	public Connection createConnectionSGD() throws ClassNotFoundException,
+			SQLException
+	{
+
+		Class.forName(ORACLE_DRIVER);
+
+		return DriverManager.getConnection(URL_CONNECTION_SGD, DB_USER_SGD,
+				DB_PASS_SGD);
+	}
+
+	public static List<String> gerarInscricao(ServicoPadrao servico)
+			throws RegistrosInexistenteNaTeaException, NumberFormatException,
+			ClassNotFoundException, SQLException
+	{
+
+		String selectQuery = "";
+
+		String casoTeste = StringUtils.leftPad(servico.getNrCasoTeste().toString(),
+				2, '0');
+
+		List<String> inscricoes = null;
+
+		Connection connection = null;
+
+		try
+		{
+
+			connection = new ConnectJDBC().createConnectionPrax();
+
+			selectQuery = "SELECT * FROM ( SELECT TEA.IMO_COD_INSCRICAO FROM "
+					+ TABELA_TEA + " TEA WHERE TEA.REALIZADO=0 AND TEA.SER_COD_SERVICO=?"
+					+ " AND CASO_TESTE= ?"
+					+ " ORDER BY SYS.DBMS_RANDOM.value)  WHERE ROWNUM=1 ";
+
+			if ( servico.isGerarPar() )
+			{
+
+				selectQuery = "SELECT * FROM ( SELECT DISTINCT TEA.IMO_COD_INSCRICAO FROM "
+						+ TABELA_TEA
+						+ " TEA WHERE TEA.REALIZADO=0 AND TEA.SER_COD_SERVICO=?"
+						+ " AND CASO_TESTE=?"
+						+ " order by SYS.DBMS_RANDOM.value)  WHERE ROWNUM<=2 ";
+
+			}
+
+			preparedStatement = connection.prepareStatement(selectQuery);
+
+			preparedStatement.setInt(1, servico.getServicos().get(0).getCodigo());
+
+			preparedStatement.setString(2, "CT" + casoTeste);
+
+			final ResultSet rs = preparedStatement.executeQuery();
+
+			inscricoes = new ArrayList<String>();
+
+			while (rs.next())
+			{
+
+				inscricoes.add(rs.getString(1));
+
+			}			
+			
+			if ( inscricoes.size() == 0 )
+			{
+
+				throw new RegistrosInexistenteNaTeaException(casoTeste);
+
+			}
+
+		}
+		catch (Exception e)
+		{
+
+		}
+		finally
+		{
+
+			connection.close();
+		}
+
+		return inscricoes;
+
+	}
+
+	public static boolean getServicoPendente(int inscricao,
+			List<EnumServico> codigos) throws SQLException
+	{
+
+		boolean condicao = false;
+
+		for (EnumServico servico : codigos)
+		{
+			Connection connection = null;
+
+			String selectQuery = "SELECT * FROM ITA_ITEM_ATENDIMENTO ITA"
+					+ " INNER JOIN SER_SERVICO SER"
+					+ " ON ITA.SER_SEQ_SERVICO = SER.SER_SEQ_SERVICO"
+					+ " WHERE ITA.IMO_COD_INSCRICAO=? AND (ITA.STA_SEQ_STATUS_ATENDIMENTO=5 OR ITA.STA_SEQ_STATUS_ATENDIMENTO=13)"
+					+ " AND SER.SER_COD_SERVICO=?";
+
+			final ResultSet rs;
+
+			try
+			{
+				connection = new ConnectJDBC().createConnectionPrax();
+
+				preparedStatement = connection.prepareStatement(selectQuery);
+
+				preparedStatement.setInt(1, inscricao);
+
+				preparedStatement.setInt(2, servico.getCodigo());
+
+				rs = preparedStatement.executeQuery();
+				while (rs.next())
+				{
+					condicao = true;
+					break;
+				}
+
+			}
+
+			catch (ClassNotFoundException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			catch (SQLException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			finally
+			{
+
+				connection.close();
+
+			}
+		}
+		return condicao;
+	}
+
+	public static String gerarCpfCnpj(ServicoPadrao servico)
+			throws ClassNotFoundException, SQLException
+	{
+		String nrCasoTeste = StringUtils.leftPad(servico.getNrCasoTeste()
+				.toString(), 2, '0');
+
+		String selectQuery = "SELECT CLI_NUM_CPF_CNPJ FROM ( SELECT TEA.CLI_NUM_CPF_CNPJ FROM "
+				+ TABELA_TEA
+				+ " TEA WHERE TEA.REALIZADO=0 AND TEA.SER_COD_SERVICO="
+				+ servico.getServicos().get(0).getCodigo()
+				+ " AND CASO_TESTE= 'CT"
+				+ nrCasoTeste + "' order by SYS.DBMS_RANDOM.value)  WHERE ROWNUM=1 ";
+
+		return getConsulta(selectQuery, new ConnectJDBC().createConnectionPrax());
+
+	}
+
+	public static String gerarInscricaoBci() throws NumberFormatException,
+			ClassNotFoundException, SQLException
+	{
+
+		String selectQuery = "SELECT * FROM (SELECT TEA.IMO_COD_INSCRICAO FROM "
+				+ TABELA_TEA + " TEA order by SYS.DBMS_RANDOM.value) WHERE ROWNUM=1";
+
+		return getConsulta(selectQuery, new ConnectJDBC().createConnectionPrax());
+
+	}
+
+	public static Integer verificarQtdContratos(String inscricao)
+			throws NumberFormatException, ClassNotFoundException, SQLException
+
+	{
+
+		int qtdContratos = 0;
+
+		String sqlQtdContratos = "SELECT COUNT(CC.CON_SEQ_CONTRATO) "
+				+ "FROM CON_CONTRATO CC WHERE CC.IMO_COD_INSCRICAO=" + inscricao;
+
+		qtdContratos = Integer.parseInt(getConsulta(sqlQtdContratos,
+				new ConnectJDBC().createConnectionPrax()));
+
+		return qtdContratos;
+
+	}
+
+	public static Integer verificarQtdContratosCpfCnpj(String cpfCnpj)
+			throws NumberFormatException, ClassNotFoundException, SQLException
+
+	{
+
+		String sqlQtdContratos = "SELECT COUNT(CLI.CLI_NUM_CPF_CNPJ) "
+				+ "FROM CLI_CLIENTE CLI " + "WHERE CLI.CLI_NUM_CPF_CNPJ = '" + cpfCnpj
+				+ "'";
+
+		return Integer.parseInt(getConsulta(sqlQtdContratos,
+				new ConnectJDBC().createConnectionPrax()));
+
+	}
+
+	public static String buscarValorMulta(String inscricao)
+			throws ClassNotFoundException, SQLException
+	{
+
+		String query = "SELECT IBS.IBS_VLR_ITEM_BAIXA_SS  FROM ITA_ITEM_ATENDIMENTO ITA"
+				+ " INNER JOIN IBS_ITEM_BAIXA_SOLIC_SERVICO IBS   ON ITA.ITA_SEQ_ITEM_ATENDIMENTO = IBS.ITA_SEQ_ITEM_ATENDIMENTO"
+				+ " INNER JOIN ITS_ITEM_SERVICO ITS ON ITS.ITS_SEQ_ITEM_SERVICO = IBS.ITS_SEQ_ITEM_SERVICO"
+				+ " WHERE ITA.SER_SEQ_SERVICO       =29059"
+				+ " AND ITA.IMO_COD_INSCRICAO       = "
+				+ inscricao
+				+ " AND ITS.ITS_TIP_ITEM_SERVICO=161";
+
+		return Util.converterFormatoStringReal(getConsulta(query,
+				new ConnectJDBC().createConnectionPrax()));
+
+	}
+
+	public static void atualizarTeaTestesAutomatizados(BtpProjeto projeto,
+			ServicoPadrao servico) throws ClassNotFoundException, SQLException
+	{
+
+		String sqlUpdate = " UPDATE " + TABELA_TEA + " SET REALIZADO=1, VERSAO='"
+				+ projeto.getId()
+				+ "', DATA_EXECUCAO=current_date WHERE IMO_COD_INSCRICAO="
+				+ servico.getInscOrigem() + " AND SER_COD_SERVICO= "
+				+ servico.getServicos().get(0).getCodigo();
+
+		executarQuery(sqlUpdate);
+
+	}
+
+	public static void executarQuery(String selectQuery)
+			throws ClassNotFoundException, SQLException
+	{
+
+		Connection connection = null;
+
+		try
+		{
+			connection = new ConnectJDBC().createConnectionPrax();
+
+			PreparedStatement preparedStatement = connection
+					.prepareStatement(selectQuery);
+
+			preparedStatement.executeQuery(selectQuery);
+
+		}
+		finally
+		{
+
+			connection.close();
+
+		}
+
+	}
+
+	public static String getConsulta(String selectQuery, Connection connection)
+			throws SQLException, ClassNotFoundException
+	{
+
+		StringBuilder consultaResultado = new StringBuilder();
+
+		try
+		{
+
+			PreparedStatement preparedStatement = connection
+					.prepareStatement(selectQuery);
+
+			ResultSet rs = preparedStatement.executeQuery(selectQuery);
+
+			while (rs.next())
+			{
+
+				consultaResultado.append(rs.getString(1));
+
+			}
+
+		}
+		finally
+		{
+
+			connection.close();
+
+		}
+
+		return consultaResultado.toString();
+	}
+
+	public static Integer verificarEconomias(String inscricao)
+			throws ClassNotFoundException, SQLException
+
+	{
+		int qtdEconomias = 0;
+
+		String sql_qtd_Economias = "SELECT COUNT(cai.IMO_COD_INSCRICAO)"
+				+ " FROM CAI_CATEGORIA_IMOVEL cai"
+				+ " WHERE cai.IMO_COD_INSCRICAO =?  "
+				+ " GROUP BY cai.CAT_SEQ_CATEGORIA," + " cai.IMO_COD_INSCRICAO";
+		Connection connection = null;
+
+		try
+		{
+
+			connection = new ConnectJDBC().createConnectionPrax();
+
+			PreparedStatement preparedStatement = connection
+					.prepareStatement(sql_qtd_Economias);
+
+			preparedStatement.setString(1, inscricao);
+
+			ResultSet rs = preparedStatement.executeQuery();
+
+			while (rs.next())
+			{
+
+				qtdEconomias++;
+
+			}
+
+		}
+		finally
+		{
+			connection.close();
+
+		}
+
+		return qtdEconomias;
+	}
+
+	public static String getCompetenciaTarifaria(String mes01, String mes02)
+			throws ParseException, ClassNotFoundException, SQLException
+	{
+
+		String query = "SELECT FAT.FAT_CPT_FATURA FROM FAT_FATURA FAT"
+				+ " WHERE FAT_DAT_GERACAO BETWEEN to_date(add_months(sysdate , "
+				+ mes01 + ")) AND to_date(add_months(sysdate , " + mes02
+				+ ")) AND ROWNUM=1";
+
+		return getConsulta(query, new ConnectJDBC().createConnectionPrax());
+	}
+
+	public static BtpProjeto getProjeto(EnumSistema sistema) throws SQLException,
+			ClassNotFoundException
+	{
+
+		BtpProjeto projeto = new BtpProjeto();
+
+		String selectQuery = "";
+
+		Connection connection = null;
+
+		try
+		{
+
+			connection = new ConnectJDBC().createConnectionMySql();
+
+			selectQuery = "SELECT ver_id_versao, ver_nr_teste, sistema, execucao, reportar FROM versao where sistema="
+					+ sistema.getCodigo() + " AND situacao=1";
+
+			preparedStatement = connection.prepareStatement(selectQuery);
+
+			final ResultSet rs = preparedStatement.executeQuery(selectQuery);
+
+			while (rs.next())
+			{
+
+				projeto.setId(rs.getString(1));
+
+				projeto.setPlano("Versão ".concat(rs.getString(1)));
+
+				projeto.setBuild("REVISAO ".concat(rs.getString(1)));
+
+				projeto.setReteste(rs.getInt(2));
+
+				projeto.setNome(EnumSistema.valueOf(rs.getInt(3)).getNomeAmigavel());
+
+				projeto.setExecucao(rs.getInt(4));
+
+				projeto.setReportar(rs.getInt(5) == 1);
+
+			}
+
+		}
+		finally
+		{
+
+			connection.close();
+
+		}
+
+		return projeto;
+
+	}
+
+	public static EnumResultadoTeste verificarStatusExecucao(String casoDeTeste,
+			BtpProjeto projeto) throws ClassNotFoundException, SQLException
+	{
+
+		String result;
+
+		Connection connection = null;
+
+		EnumResultadoTeste tipoExecucao = null;
+
+		try
+		{
+			String query;
+
+			connection = new ConnectJDBC().createConnectionMySql();
+
+			query = "SELECT t.status FROM testes t inner join versao v on v.codigo=t.versao"
+					+ " where t.caso_teste = '"
+					+ casoDeTeste
+					+ "'"
+					+ " and v.ver_id_versao = '"
+					+ projeto.getId()
+					+ "' and t.ver_nr_teste=" + projeto.getReteste();
+
+			result = getConsulta(query, new ConnectJDBC().createConnectionMySql());
+
+		}
+		finally
+		{
+
+			connection.close();
+
+		}
+
+		if ( result.isEmpty() )
+		{
+			tipoExecucao = EnumResultadoTeste.NAO_EXECUTADO;
+		}
+		else if ( result.equals("1") )
+		{
+			tipoExecucao = EnumResultadoTeste.SUCESSO;
+		}
+		else if ( result.equals("0") )
+		{
+			tipoExecucao = EnumResultadoTeste.FALHA;
+		}
+
+		return tipoExecucao;
+
+	}
+
+	public static void reportarResultado(ResultadoTest testLink, String casoTeste)
+			throws ClassNotFoundException, SQLException
+
+	{
+
+		String query = "";
+
+		int id = 0;
+
+		Connection connection = null;
+
+		try
+		{
+			connection = new ConnectJDBC().createConnectionMySql();
+
+			query = "SELECT ID FROM testes WHERE versao=(SELECT CODIGO FROM versao WHERE SITUACAO =1 AND SISTEMA=1) AND ver_nr_teste=(SELECT ver_nr_teste FROM versao WHERE SITUACAO =1 AND SISTEMA=1) AND caso_teste=\""
+					+ casoTeste.substring(0, 12) + "\"";
+
+			preparedStatement = connection.prepareStatement(query);
+
+			final ResultSet rs = preparedStatement.executeQuery(query);
+
+			while (rs.next())
+			{
+
+				id = rs.getInt(1);
+
+			}
+			String logErro = (testLink.getResultado().equals("f") ? testLink
+					.getObservacao() : "");
+
+			logErro = logErro.replace("\"", "");
+
+			if ( id == 0 ) // INSERIR
+			{
+
+				query = "INSERT INTO testes (VERSAO, CASO_TESTE, STATUS, ERRO, ver_nr_teste, LOG_ERRO) VALUES (( SELECT CODIGO FROM versao WHERE SITUACAO =1 AND SISTEMA=1), ?, ?, ?, ( SELECT ver_nr_teste FROM versao WHERE SITUACAO =1 AND SISTEMA=1), ?)";
+
+				preparedStatement = connection.prepareStatement(query);
+
+				preparedStatement.setString(1, casoTeste.substring(0, 12));
+
+				preparedStatement.setInt(2, (testLink.getResultado().equals("f") ? 0
+						: 1));
+
+				preparedStatement.setInt(3, (testLink.getTipoErro().getLetra()));
+
+				preparedStatement.setString(4, testLink.getObservacao());
+
+				preparedStatement.execute();
+
+			}
+
+			else
+			{
+
+				logErro = logErro.replace("\"", "");
+
+				query = "UPDATE testes set STATUS="
+						+ (testLink.getResultado().equals("f") ? 0 : 1) + ", ERRO="
+						+ testLink.getTipoErro().getLetra() + ", LOG_ERRO=\"" + logErro
+						+ "\" WHERE id=" + id;
+
+				preparedStatement.execute(query);
+
+			}
+
+		}
+		finally
+		{
+
+			connection.close();
+
+		}
+
+	}
+
+	/**
+	 * Recupera valores booleanos na Tabela Parametro geral
+	 * 
+	 * @param enumParametroGeral
+	 * @return
+	 * @throws ClassNotFoundException
+	 * @throws SQLException
+	 */
+	public static boolean getParametroGeral(EnumParametroGeral enumParametroGeral)
+			throws ClassNotFoundException, SQLException
+	{
+		boolean retorno = false;
+
+		String selectQuery = "";
+
+		Connection connection = null;
+
+		try
+		{
+
+			connection = new ConnectJDBC().createConnectionPrax();
+
+			selectQuery = "SELECT * FROM PAG_PARAMETRO_GERAL WHERE chave = \'"
+					+ enumParametroGeral.toString() + "\'";
+
+			preparedStatement = connection.prepareStatement(selectQuery);
+
+			final ResultSet rs = preparedStatement.executeQuery(selectQuery);
+
+			while (rs.next())
+			{
+				retorno = rs.getString(2).equals("true");
+			}
+
+		}
+		finally
+		{
+
+			connection.close();
+
+		}
+
+		return retorno;
+	}
+
+}

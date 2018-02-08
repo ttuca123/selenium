@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core">
+
+<h:head>
+	<link rel="stylesheet" type="text/css" href="../css/plataforma.css" />
+
+</h:head>
+
+<h:body style="background-image: url('../images/back.jpg');">
+
+
+	<div style="padding: 100px 100px 100px 50px;">
+		<h:form id="formPrincipal" action="j_security_check" method="post">
+
+			<p:growl id="message" showDetail="true" />
+
+			<div style="height: 50px; border:0px">
+				<p:panelGrid id="panelSelect" columns="2" style="border:0px;">
+
+					<h:outputText value="Usuários" style="color:black;" />
+					<p:inputText 
+					    id="autUsuario_minusculo" name="j_username"
+						maxlength="8" style="width:300px;" />
+
+					<h:outputText value="Senha:" style="color:black;" />
+					<p:password 
+						id="autSenha_minusculo" name="j_password"
+						label="Senha" required="true" maxlength="15" />				
+
+					<br />
+					<input type="submit" value="Entrar" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only login-button" />
+				</p:panelGrid>
+
+			</div>
+		</h:form>
+	</div>
+</h:body>
+
+</html>

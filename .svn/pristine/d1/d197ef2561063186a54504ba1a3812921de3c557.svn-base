@@ -1,0 +1,447 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html">
+
+
+<h:head>
+	<link rel="stylesheet" type="text/css" href="css/plataforma.css" />
+
+</h:head>
+
+<h:body>
+	<div style="width: 40px; float: left">
+		<h:form id="formMenu">
+			<a href="index.xhtml"> <p:graphicImage value="./images/home.png"
+					width="30px" style="padding-left:10px" />
+			</a>
+		</h:form>
+	</div>
+
+	<div style="padding: 0px 50px 0px 50px;">
+		<h:form id="formPrincipal">
+
+			<p:growl id="message" showDetail="true" />
+
+			<div style="height: 50px">
+				<p:panelGrid id="panelSelect" columns="5">
+					<h:outputText value="Sistema" />
+					<p:selectOneMenu value="#{defeitoBean.btpSistema}" immediate="true"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="TODOS" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="sistema" itemLabel="#{sistema.sisNomSistema}"
+							itemValue="#{sistema}" value="#{defeitoBean.lstSistemas}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstSistemas}" />
+						<p:ajax update="versoes, tableLst" />
+					</p:selectOneMenu>
+
+					<h:outputText value="Versão" />
+					<p:selectOneMenu value="#{defeitoBean.btpVersao}" id="versoes"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="ver" itemLabel="#{ver.verIdVersao}"
+							itemValue="#{ver}" value="#{defeitoBean.lstVersoes}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstVersoes}" />
+						<p:ajax update="tableLst" />
+					</p:selectOneMenu>
+
+				</p:panelGrid>
+
+			</div>
+
+			<p:dataTable var="defeito" value="#{defeitoBean.defeitoList}"
+				paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+				id="tableLst" paginator="true" rows="14"
+				filteredValue="#{defeitoBean.defeitosFiltradas}"
+				selection="#{defeitoBean.btpDefeito}"
+				rowKey="#{defeito.defSeqDefeito}">
+
+				<p:ajax event="rowSelect" update=":formAlterar" />
+
+				<f:facet name="header">DEFEITOS</f:facet>
+
+				<p:column headerText="Ações" style="width:50px; height:36px;">
+
+					<p:commandLink title="Alterar" update=":formAlterar:Alterar"
+						oncomplete="dialogAlterar.show()" immediate="true"
+						actionListener="#{defeitoBean.selecionar}">
+						<p:graphicImage value="./images/edit.png" width="25px" />
+						<f:setPropertyActionListener target="#{defeitoBean.btpDefeito}"
+							value="#{defeito}" />
+					</p:commandLink>
+
+					<p:commandLink title="Excluir" update=":formExcluir:Excluir"
+						oncomplete="confirmationCaso.show()" immediate="true">
+						<p:graphicImage value="./images/del.png" width="25px"
+							style="padding-left:10px" />
+						<f:setPropertyActionListener target="#{defeitoBean.btpDefeito}"
+							value="#{defeito}" />
+					</p:commandLink>
+
+				</p:column>
+
+
+				<p:column filterBy="#{defeito.defSeqDefeito}" style="width:60px"
+					filterMatchMode="contains" filterStyle="width:60px">
+					<f:facet name="header">
+						<h:outputText value="Id" />
+					</f:facet>
+
+					<h:outputText value="#{defeito.defSeqDefeito}" />
+				</p:column>
+
+
+				<p:column style="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Versão" />
+					</f:facet>
+
+					<h:outputText value="#{defeito.btpVersao.verIdVersao}" />
+				</p:column>
+
+				<p:column filterBy="#{defeito.usuSeqUsuarioRelator}"
+					style="width:100px" filterMatchMode="contains"
+					filterStyle="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Relator" />
+					</f:facet>
+
+					<h:outputText value="#{defeito.usuSeqUsuarioRelator}" />
+				</p:column>
+
+
+				<p:column filterBy="#{defeito.defDtaCadastro}" footerText="contains"
+					style="width:100px" filterMatchMode="contains"
+					filterStyle="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Data" />
+
+					</f:facet>
+
+					<h:outputText value="#{defeito.defDtaCadastro}">
+						<f:convertDateTime pattern="dd/MM/YYYY HH:mm:ss" timeZone="GMT-3" />
+					</h:outputText>
+				</p:column>
+
+
+				<p:column filterBy="#{defeito.defDscResumo}" style="width:500px"
+					filterMatchMode="contains" filterStyle="width:500px">
+					<f:facet name="header">
+						<h:outputText value="Resumo" />
+					</f:facet>
+
+					<h:outputText value="#{defeito.defDscResumo}" />
+				</p:column>
+
+
+				<p:column filterBy="#{defeito.usuSeqUsuario}" style="width:100px"
+					filterMatchMode="contains" filterStyle="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Desenvolvedor" />
+					</f:facet>
+
+					<h:outputText value="#{defeito.usuSeqUsuario}" />
+				</p:column>
+
+				<p:column filterBy="#{defeito.enumDefPrioridade.descricao}"
+					style="width:100px" filterMatchMode="contains"
+					filterStyle="width:100px">
+					<f:facet name="header">
+						<h:outputText value="Prioridade" />
+					</f:facet>
+
+					<h:outputText value="#{defeito.enumDefPrioridade.descricao}" />
+				</p:column>
+
+
+				<p:column filterBy="#{defeito.enumDefStatus.descricao}"
+					style="width:30px" filterMatchMode="contains"
+					filterStyle="width:30px">
+					<f:facet name="header">
+						<h:outputText value="Situação" />
+					</f:facet>
+					<p:graphicImage value="#{defeito.enumDefStatus.icone}" width="25px"
+						title="#{defeito.enumDefStatus.descricao}" />
+				</p:column>
+
+
+			</p:dataTable>
+			<br />
+
+			<p:commandButton value="Reportar Defeito" id="cadastrar"
+				actionListener="#{defeitoBean.novo}" immediate="true"
+				update=":formCadastrar:dialogCadastrar, message"
+				oncomplete="dialogCadastrar.show()" />
+
+
+
+		</h:form>
+
+		<h:form id="formCadastrar">
+			<p:dialog header="Nova Versão" widgetVar="dialogCadastrar"
+				closeOnEscape="true" modal="true" resizable="false"
+				maximizable="true" id="dialogCadastrar">
+
+				<p:commandButton value="Salvar"
+					actionListener="#{defeitoBean.inserir}"
+					update=":formPrincipal:tableLst" onclick="dialogCadastrar.hide()" />
+
+				<p:panelGrid columns="5" style="margin-top:10px;">
+
+					<h:outputText value="Categoria:" />
+					<h:outputText value="Prioridade:" />
+					<h:outputText value="Classificação:" />
+					<h:outputText value="Fase:" />
+					<h:outputText value="Origem:" />
+
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefCategoria}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstCategorias}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu
+						value="#{defeitoBean.btpDefeito.enumDefPrioridade}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstPrioridades}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefClasse}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.nomeAmigavel}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstClassificacoes}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefFase}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstFases}" />
+					</p:selectOneMenu>
+
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefOrigem}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstOrigens}" />
+					</p:selectOneMenu>
+				</p:panelGrid>
+
+				<p:panelGrid columns="5" style="margin-top:10px;">
+					<h:outputText value="Versão" />
+					<h:outputText value="Demanda" />
+					<h:outputText value="Relator:" />
+
+					<h:outputText value="Atribuir a:" />
+					<h:outputText value="Previsto para a Versão" />
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.btpVersao}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="vers" itemLabel="#{vers.verIdVersao}"
+							itemValue="#{vers}" value="#{defeitoBean.lstVersoes}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstVersoes}" />
+						<p:ajax update="demanda" />
+
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.btpDemanda}"
+						id="demanda" converter="converterPadrao"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="dema" itemLabel="#{dema.demNumSGD}"
+							itemValue="#{dema}" value="#{defeitoBean.lstDemandas}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstDemandas}" />
+					</p:selectOneMenu>
+
+					<p:inputText value="#{defeitoBean.btpDefeito.usuSeqUsuarioRelator}"
+						maxlength="10" style="width:150px" />
+
+					<p:inputText value="#{defeitoBean.btpDefeito.usuSeqUsuario}"
+						maxlength="10" style="width:150px" />
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.btpVersaoPrev}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="vers" itemLabel="#{vers.verIdVersao}"
+							itemValue="#{vers}" value="#{defeitoBean.lstVersoes}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstVersoes}" />
+					</p:selectOneMenu>
+				</p:panelGrid>
+
+				<p:panelGrid columns="2" style="margin-top:10px;">
+
+					<h:outputText value="Resumo:" />
+					<p:inputTextarea value="#{defeitoBean.btpDefeito.defDscResumo}"
+						cols="500" rows="6" style="width:1000px" />
+
+					<h:outputText value="Passo a Passo:" />
+					<p:inputTextarea value="#{defeitoBean.btpDefeito.defDscPassos}"
+						cols="500" rows="6" style="width:1000px" />
+
+					<h:outputText value="Observações:" />
+					<p:inputTextarea value="#{defeitoBean.btpDefeito.defDscObservacao}"
+						cols="500" rows="6" style="width:1000px" />
+
+				</p:panelGrid>
+				<br />
+			</p:dialog>
+
+
+		</h:form>
+
+		<h:form id="formAlterar">
+			<p:dialog header="Alterar Registro" widgetVar="dialogAlterar"
+				closeOnEscape="true" modal="true" id="Alterar" dynamic="true"
+				resizable="false">
+
+				<p:commandButton value="Salvar"
+					actionListener="#{defeitoBean.alterar}"
+					update=":formPrincipal:tableLst, :formPrincipal:message"
+					oncomplete="dialogAlterar.hide()" />
+				<br />
+				<p:panelGrid columns="5" style="margin-top:10px;">
+
+					<h:outputText value="Categoria:" />
+					<h:outputText value="Prioridade:" />
+					<h:outputText value="Classificação:" />
+					<h:outputText value="Fase:" />
+					<h:outputText value="Origem:" />
+
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefCategoria}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstCategorias}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu
+						value="#{defeitoBean.btpDefeito.enumDefPrioridade}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstPrioridades}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefClasse}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.nomeAmigavel}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstClassificacoes}" />
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefFase}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstFases}" />
+					</p:selectOneMenu>
+
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.enumDefOrigem}"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+						<f:selectItems var="tipo" itemLabel="#{tipo.descricao}"
+							itemValue="#{tipo}" value="#{defeitoBean.lstOrigens}" />
+					</p:selectOneMenu>
+				</p:panelGrid>
+
+				<p:panelGrid columns="5" style="margin-top:10px;">
+					<h:outputText value="Versão" />
+					<h:outputText value="Demanda" />
+					<h:outputText value="Testador:" />
+
+					<h:outputText value="Atribuir a:" />
+					<h:outputText value="Previsto para a Versão" />
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.btpVersao}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="vers" itemLabel="#{vers.verIdVersao}"
+							itemValue="#{vers}" value="#{defeitoBean.lstVersoes}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstVersoes}" />
+						<p:ajax update="demanda" />
+
+					</p:selectOneMenu>
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.btpDemanda}"
+						id="demanda" converter="converterPadrao"
+						unselectedLabel="Selecione uma Opção" style="width:250px">
+
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="dema" itemLabel="#{dema.demNumSGD}"
+							itemValue="#{dema}" value="#{defeitoBean.lstDemandas}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstDemandas}" />
+					</p:selectOneMenu>
+
+					<p:inputText value="#{defeitoBean.btpDefeito.usuSeqUsuarioRelator}"
+						maxlength="10" style="width:150px" />
+
+					<p:inputText value="#{defeitoBean.btpDefeito.usuSeqUsuario}"
+						maxlength="10" style="width:150px" />
+
+					<p:selectOneMenu value="#{defeitoBean.btpDefeito.btpVersaoPrev}"
+						converter="converterPadrao" unselectedLabel="Selecione uma Opção"
+						style="width:250px">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}"
+							noSelectionOption="true" />
+						<f:selectItems var="vers" itemLabel="#{vers.verIdVersao}"
+							itemValue="#{vers}" value="#{defeitoBean.lstVersoes}" />
+						<f:attribute name="itens" value="#{defeitoBean.lstVersoes}" />
+					</p:selectOneMenu>
+				</p:panelGrid>
+
+				<p:panelGrid columns="2" style="margin-top:10px;">
+
+					<h:outputText value="Resumo:" />
+					<p:inputTextarea value="#{defeitoBean.btpDefeito.defDscResumo}"
+						cols="500" rows="6" style="width:1000px" />
+
+					<h:outputText value="Passo a Passo:" />
+					<p:inputTextarea value="#{defeitoBean.btpDefeito.defDscPassos}"
+						cols="500" rows="6" style="width:1000px" />
+
+					<h:outputText value="Observações:" />
+					<p:inputTextarea value="#{defeitoBean.btpDefeito.defDscObservacao}"
+						cols="500" rows="6" style="width:1000px" />
+
+				</p:panelGrid>
+				<br />
+			</p:dialog>
+		</h:form>
+
+		<h:form id="formExcluir">
+
+			<p:confirmDialog id="Excluir" closeOnEscape="true"
+				message="Confirma exclusão do registro do Defeito #{defeitoBean.btpDefeito.defSeqDefeito}?"
+				header="Excluir" severity="alert" widgetVar="confirmation">
+
+				<p:commandButton value="Sim" type="submit" immediate="true"
+					styleClass="ui-confirmdialog-yes" icon="ui-icon-check"
+					actionListener="#{defeitoBean.excluir}"
+					onclick="confirmation.hide()"
+					update=":formPrincipal:tableLst, :formPrincipal:message" />
+
+				<p:commandButton value="Não" type="button"
+					styleClass="ui-confirmdialog-no" icon="ui-icon-close"
+					onclick="confirmation.hide()" />
+
+			</p:confirmDialog>
+		</h:form>
+	</div>
+
+
+</h:body>
+
+</html>

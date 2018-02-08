@@ -1,0 +1,56 @@
+package anotations;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import enumerators.EnumServico;
+import enumerators.EnumTipoLaudo;
+import enumerators.EnumTipoPagamento;
+import enumerators.EnumTipoExecucaoServico;
+import enumerators.EnumUsuario;
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CasoDeTesteServico
+{
+
+	String id() default "";
+
+	EnumServico servico();
+
+	EnumTipoPagamento tipoPgto() default EnumTipoPagamento.SEM_CUSTO;
+
+	EnumServico servicoCasado() default EnumServico.NENHUM;
+
+	EnumTipoPagamento tipoPgtoServCasado() default EnumTipoPagamento.A_VISTA;
+
+	EnumUsuario usuario() default EnumUsuario.ADMINISTRADOR;
+
+	boolean gerarParInscricao() default false;
+
+	boolean executarBaixa() default false;
+
+	boolean verificaDebito() default false;
+	
+	// Identifica se a movimentação de fatura é feita de maneira opcional 
+	boolean movimentarFatura()  default false;
+	
+	boolean geraLancamentoFuturo() default true;
+	
+	EnumTipoLaudo laudo() default EnumTipoLaudo.INDIFERENTE;
+
+	EnumTipoExecucaoServico enumTipoServico() default EnumTipoExecucaoServico.IMOVEL;
+
+	String complemento() default "";
+
+	String itemLAF() default "";
+	
+	double valor() default 0.00;
+
+	boolean executarComAlcada() default false;
+	
+	String inscricaoOrigem() default "";
+
+}

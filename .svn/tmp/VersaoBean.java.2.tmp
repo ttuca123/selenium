@@ -1,0 +1,537 @@
+package managed;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.DataModel;
+import javax.faces.model.ListDataModel;
+
+import modelo.BtpDemanda;
+import modelo.BtpDependencia;
+import modelo.BtpInstrucaoSql;
+import modelo.BtpSistema;
+import modelo.BtpVersao;
+import utils.Funcoes;
+import ejb.DemandaRemote;
+import ejb.DependenciaRemote;
+import ejb.SistemaRemote;
+import ejb.VersaoRemote;
+import enumerators.EnumAtivoAfetado;
+import enumerators.EnumSituacao;
+import enumerators.EnumSituacaoSimNao;
+import enumerators.EnumStatusDemanda;
+import enumerators.EnumStatusVersao;
+import enumerators.EnumTipoDemanda;
+import enumerators.EnumTipoExecucao;
+import enumerators.EnumTipoVersao;
+
+@ViewScoped
+@ManagedBean(name = "versaoBean")
+public class VersaoBean
+
+{
+
+	@EJB
+	private VersaoRemote srvVersao;
+
+	@EJB
+	private SistemaRemote srvSistema;
+
+	@EJB
+	private DependenciaRemote srvDependencia;
+
+	@EJB
+	private DemandaRemote srvDemanda;
+
+	private List<BtpVersao> listaVersoes;
+
+	private List<BtpVersao> versoesFiltradas;
+
+	private DataModel<BtpVersao> versoes;
+
+	private BtpSistema btpSistema;
+
+	private BtpDependencia btpDependencia;
+
+	private EnumStatusVersao enumStatusVersao;
+
+	private BtpVersao btpVersao = new BtpVersao();
+
+	private String changeLog;
+
+	private Boolean ignorarPublicadas = true;
+
+	public VersaoBean()
+	{
+		listaVersoes = new ArrayList<BtpVersao>();
+	}
+
+	public void novo() throws Exception
+	{
+		btpVersao = new BtpVersao();
+	}
+
+	public void novaDependencia()
+	{
+		btpDependencia = new BtpDependencia();
+		btpDependencia.setBtpVersaoPai(btpVersao);
+	}
+
+	public void selecionar()
+	{
+		btpVersao = versoes.getRowData();
+	}
+
+	public DataModel<BtpVersao> getVersaoListChamado()
+	{
+		if ( btpSistema == null )
+		{
+			listaVersoes = srvVersao.listar(enumStatusVersao);
+		}
+		else
+		{
+			listaVersoes = srvVersao.listar(btpSistema, enumStatusVersao);
+		}
+		List<BtpVersao> retorno = new ArrayList<BtpVersao>();
+
+		for (BtpVersao btpVersao : listaVersoes)
+		{
+			if ( (btpVersao.getReportar())
+					&& listarDemandas(btpVersao, -1).size() > 0 )
+			{
+				retorno.add(btpVersao);
+			}
+
+		}
+
+		versoes = new ListDataModel<BtpVersao>(retorno);
+		return versoes;
+	}
+
+	public DataModel<BtpVersao> getVersaoList()
+	{
+		List<BtpVersao> vers = new ArrayList<BtpVersao>();
+
+		if ( btpSistema == null )
+		{
+			listaVersoes = srvVersao.listar(enumStatusVersao);
+		}
+		else
+		{
+			listaVersoes = srvVersao.listar(btpSistema, enumStatusVersao);
+		}
+
+		for (BtpVersao ver : listaVersoes)
+		{
+			if ( ignorarPublicadas )
+			{
+				if ( !ver.getSituacao().equals(EnumStatusVersao.PUBLICADA) &&  !ver.getSituacao().equals(EnumStatusVersao.REPUBLICADA) )
+				{
+					vers.add(ver);
+				}
+			}
+			else
+			{
+				vers.add(ver);
+			}
+		}
+		listaVersoes = vers;
+		versoes = new ListDataModel<BtpVersao>(listaVersoes);
+		return versoes;
+	}
+
+	public Collection<BtpVersao> getLstVersoes()
+	{
+		if ( btpDependencia == null || btpDependencia.getBtpSistema() == null )
+		{
+			return null;
+		}
+		return srvVersao.listar(btpDependencia.getBtpSistema(), null);
+	}
+
+	public Collection<BtpDemanda> getLstDemandas()
+	{
+		if ( btpVersao == null )
+		{
+			return null;
+		}
+		return srvDemanda.listar(btpVersao);
+	}
+
+	/**
+	 * INSERIR
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         26/10/2015 - 13:51:24.
+	 * @return
+	 * @throws Exception
+	 */
+	public String inserir() throws Exception
+	{
+		String resultado = "falha";
+
+		BtpVersao vers = srvVersao.salvar(btpVersao);
+
+		boolean retorno = false;
+
+		if ( vers.getId() != null )
+		{
+			retorno = true;
+			addMessage("OK", "Registro Inserido Com sucesso!!!");
+		}
+
+		if ( retorno )
+		{
+			resultado = "versoes";
+		}
+
+		btpVersao = new BtpVersao();
+
+		return resultado;
+	}
+
+	public void inserirDependencia() throws Exception
+	{
+
+		BtpDependencia deps = srvDependencia.salvar(btpDependencia);
+
+		if ( deps.getVedSeqVersaoDependencia() != null )
+		{
+			addMessage("OK", "Registro Inserido Com sucesso!!!");
+		}
+
+		btpDependencia = new BtpDependencia();
+	}
+
+	public List<BtpDependencia> getLstDependencias()
+	{
+
+		if ( btpVersao == null )
+		{
+			return null;
+		}
+		return srvDependencia.listar(btpVersao);
+
+	}
+
+	/**
+	 * ALTERAR
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         26/10/2015 - 13:51:18.
+	 * @return
+	 * @throws Exception
+	 */
+	public void alterar() throws Exception
+	{
+		srvVersao.salvar(btpVersao);
+
+		addMessage("OK", "Versao atualizada com sucesso!!!");
+
+		btpVersao = new BtpVersao();
+	}
+
+	public void addMessage(String summary, String detail)
+	{
+		FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO,
+				summary, detail);
+		FacesContext.getCurrentInstance().addMessage(null, message);
+
+	}
+
+	public void excluir() throws Exception
+	{
+		listaVersoes.remove(btpVersao);
+
+		srvVersao.excluir(btpVersao);
+
+		btpVersao = new BtpVersao();
+
+		addMessage("OK", "Registro Excluido com sucesso!!!");
+
+	}
+
+	public void excluirDependencia() throws Exception
+	{
+		srvDependencia.excluir(btpDependencia);
+
+		addMessage("OK", "Registro Excluido com sucesso!!!");
+
+	}
+
+	public void downloadSQL(BtpVersao versao) throws IOException
+	{
+		StringBuilder ret = new StringBuilder();
+		ret.append("--- Script pela geracao da VERSÃO: "
+				+ versao.getVerIdVersao()+" - " +versao.getBtpSistema().getSisNomSistema());
+
+		SimpleDateFormat dataFormatada = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		ret.append("--- \n Criado em " + dataFormatada.format(new Date()));
+		ret.append("--- \n\n\n");
+
+		for (BtpDemanda btpDemanda : versao.getLstDemandas())
+		{
+			if ( btpDemanda.getDemCodStatus().equals(EnumStatusDemanda.PASSOU) )
+			{
+				for (BtpInstrucaoSql btpInstrucao : btpDemanda.getLstSQLs())
+				{
+					ret.append("--- PUBLICADO EM "
+							+ dataFormatada.format(btpInstrucao.getInsDtaCadastro()) + "\n");
+					ret.append("--- REFERÊNCIA: SGD "
+							+ btpInstrucao.getBtpDemanda().getDemNumSGD() + "\n");
+					ret.append("--- DESENVOLVEDOR: " + btpInstrucao.getUsuSeqUsuario()
+							+ "\n");
+					ret.append("--- EXECUÇÃO: "
+							+ btpInstrucao.getInsMomentoExecucao().getValor() + "\n");
+					ret.append("\n");
+					ret.append("--- OBJETIVO: " + btpInstrucao.getInsDscObjetivo() + "\n");
+					ret.append("\n");
+					ret.append("--- INICIO INSTRUÇÃO SQL ---\n");
+					ret.append("\n");
+					ret.append(btpInstrucao.getInsScriptSql());
+					ret.append("\n\n");
+					ret.append("--- FIM INSTRUÇÃO SQL ---\n\n\n");
+				}
+			}
+		}
+
+		Funcoes.download(ret, versao.getBtpSistema().getSisDscSigla() + "-v"
+				+ versao.getVerIdVersao() + ".sql");
+	}
+
+	public void gerarChamadoMudanca(BtpVersao btpVersao)
+	{
+
+		StringBuilder sgds = new StringBuilder();
+
+		StringBuilder chamado = new StringBuilder();
+
+		for (BtpDemanda dem : btpVersao.getLstDemandas())
+		{
+			sgds.append("- " + dem.getDemDscDemanda() + "<br/>");
+		}
+
+		for (BtpDemanda dem : btpVersao.getLstDemandas())
+		{
+			if ( dem.getDemFlgExibirChamado().equals(EnumSituacaoSimNao.SIM) )
+			{
+				chamado.append("- " + dem.getDemDscChamado() + "<br/>");
+			}
+		}
+		if ( chamado.toString().length() == 0 )
+		{
+			chamado.append("Utilizar comunciado padr&atilde;o.");
+		}
+
+		SimpleDateFormat formataData = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+		Funcoes.enviarEmail(btpVersao.getVerIdVersaoCompleta(), btpVersao
+				.getBtpSistema().getSisDscSigla().toUpperCase(),
+				formataData.format(btpVersao.getVerDtaIniPublic()),
+				formataData.format(btpVersao.getVerDtaFimPublic()),
+				btpVersao.getEnumAtivoAfetado(), btpVersao.getVerDscRiscos(), sgds,
+				chamado);
+
+	}
+
+	public void downloadChangeLog(BtpVersao versao) throws IOException
+	{
+		StringBuilder ret = new StringBuilder();
+		ret.append("--- ChangeLog da VERSÃO DO PRAX: " + versao.getVerIdVersao());
+
+		SimpleDateFormat dataFormatada = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		ret.append("--- \n Criado em " + dataFormatada.format(new Date()));
+		ret.append("--- \n\n\n");
+
+		for (BtpDemanda btpDemanda : versao.getLstDemandas())
+		{
+			if ( btpDemanda.getDemFlgExibirChamado().equals(EnumSituacaoSimNao.SIM) )
+			{
+				ret.append(" - " + btpDemanda.getDemDscChamado() + "\n");
+			}
+		}
+
+		Funcoes.download(
+				ret,
+				"ChangeLog-" + versao.getBtpSistema().getSisDscSigla() + "-v"
+						+ versao.getVerIdVersao() + ".txt");
+	}
+
+	public String getChangeLog()
+	{
+		return changeLog;
+	}
+
+	public List<BtpDemanda> listarDemandas(BtpVersao versao, Integer tipoDemanda)
+	{
+		List<BtpDemanda> dems = new ArrayList<BtpDemanda>();
+
+		if ( tipoDemanda < 0 )
+		{
+			for (BtpDemanda btpDemanda : versao.getLstDemandas())
+			{
+				if ( btpDemanda.getDemFlgExibirChamado().equals(EnumSituacaoSimNao.SIM) )
+				{
+					dems.add(btpDemanda);
+				}
+			}
+		}
+		else
+		{
+			for (BtpDemanda btpDemanda : versao.getLstDemandas())
+			{
+				if ( (btpDemanda.getDemFlgExibirChamado()
+						.equals(EnumSituacaoSimNao.SIM))
+						&& (btpDemanda.getDemCodTipoDemanda().equals(EnumTipoDemanda
+								.valueOf(tipoDemanda))) )
+				{
+					dems.add(btpDemanda);
+				}
+			}
+		}
+
+		return dems;
+	}
+
+	public Collection<EnumSituacao> getLstSituacao()
+	{
+		return Arrays.asList(EnumSituacao.values());
+	}
+
+	public Collection<EnumAtivoAfetado> getLstAtivoAfetado()
+	{
+		return Arrays.asList(EnumAtivoAfetado.values());
+	}
+
+	public Collection<EnumStatusVersao> getLstStatusVersao()
+	{
+		return Arrays.asList(EnumStatusVersao.values());
+	}
+
+	public Collection<EnumTipoVersao> getLstTipoVersao()
+	{
+		return Arrays.asList(EnumTipoVersao.values());
+	}
+
+	public Collection<EnumSituacaoSimNao> getLstSituacaoSimNao()
+	{
+		return Arrays.asList(EnumSituacaoSimNao.values());
+	}
+
+	public Collection<EnumTipoExecucao> getLstTipoExecucao()
+	{
+		return Arrays.asList(EnumTipoExecucao.values());
+	}
+
+	public VersaoRemote getSrvVersao()
+	{
+		return srvVersao;
+	}
+
+	public void setSrvVersao(VersaoRemote srvVersao)
+	{
+		this.srvVersao = srvVersao;
+	}
+
+	public List<BtpVersao> getListaVersoes()
+	{
+		return listaVersoes;
+	}
+
+	public void setListaVersoes(List<BtpVersao> listaVersoes)
+	{
+		this.listaVersoes = listaVersoes;
+	}
+
+	public List<BtpVersao> getVersoesFiltradas()
+	{
+		return versoesFiltradas;
+	}
+
+	public void setVersoesFiltradas(List<BtpVersao> versoesFiltradas)
+	{
+		this.versoesFiltradas = versoesFiltradas;
+	}
+
+	public DataModel<BtpVersao> getVersoes()
+	{
+		return versoes;
+	}
+
+	public void setVersoes(DataModel<BtpVersao> versoes)
+	{
+		this.versoes = versoes;
+	}
+
+	public BtpVersao getBtpVersao()
+	{
+		return btpVersao;
+	}
+
+	public void setBtpVersao(BtpVersao btpVersao)
+	{
+		this.btpVersao = btpVersao;
+	}
+
+	public List<BtpSistema> getLstSistemas()
+	{
+
+		return srvSistema.listar();
+	}
+
+	public BtpSistema getBtpSistema()
+	{
+		return btpSistema;
+	}
+
+	public void setBtpSistema(BtpSistema btpSistema)
+	{
+		this.btpSistema = btpSistema;
+	}
+
+	public EnumStatusVersao getEnumStatusVersao()
+	{
+		return enumStatusVersao;
+	}
+
+	public void setEnumStatusVersao(EnumStatusVersao enumStatusVersao)
+	{
+		this.enumStatusVersao = enumStatusVersao;
+	}
+
+	public BtpDependencia getBtpDependencia()
+	{
+		return btpDependencia;
+	}
+
+	public void setBtpDependencia(BtpDependencia btpDependencia)
+	{
+		this.btpDependencia = btpDependencia;
+	}
+
+	public void setChangeLog(String changeLog)
+	{
+		this.changeLog = changeLog;
+	}
+
+	public Boolean getIgnorarPublicadas()
+	{
+		return ignorarPublicadas;
+	}
+
+	public void setIgnorarPublicadas(Boolean ignorarPublicadas)
+	{
+		this.ignorarPublicadas = ignorarPublicadas;
+	}
+
+}

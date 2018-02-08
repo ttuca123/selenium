@@ -1,0 +1,542 @@
+package managed;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.model.DataModel;
+import javax.faces.model.ListDataModel;
+
+import modelo.BtpDemanda;
+import modelo.BtpInstrucaoSql;
+import modelo.BtpModulo;
+import modelo.BtpSistema;
+import modelo.BtpVersao;
+import auxiliares.ConnectJDBC;
+import ejb.DemandaRemote;
+import ejb.InstrucaoRemote;
+import ejb.ModuloRemote;
+import ejb.SistemaRemote;
+import ejb.VersaoRemote;
+import enumerators.EnumSituacaoSimNao;
+import enumerators.EnumStatusDemanda;
+import enumerators.EnumStatusVersao;
+import enumerators.EnumTipoDemanda;
+
+@ViewScoped
+@ManagedBean(name = "demandaBean")
+public class DemandaBean {
+
+	@EJB
+	private ModuloRemote srvModulo;
+
+	@EJB
+	private DemandaRemote srvDemanda;
+
+	@EJB
+	private VersaoRemote srvVersao;
+
+	@EJB
+	private SistemaRemote srvSistema;
+
+	@EJB
+	private InstrucaoRemote srvInstrucao;
+
+	private BtpSistema btpSistema;
+
+	private BtpVersao btpVersao;
+
+	private BtpInstrucaoSql btpInstrucaoSQL;
+
+	private List<BtpDemanda> listaDemandas;
+
+	private List<BtpDemanda> demandasFiltradas;
+
+	private DataModel<BtpDemanda> demandas;
+
+	private BtpDemanda btpDemanda = new BtpDemanda();
+
+	public DemandaBean() {
+		listaDemandas = new ArrayList<BtpDemanda>();
+	}
+
+	public boolean getVerificaImportacao() {
+		if (btpSistema != null
+				&& btpVersao != null
+				&& (btpVersao.getSituacao().equals(EnumStatusVersao.TESTES) || btpVersao
+						.getSituacao().equals(EnumStatusVersao.DESENVOLVIMENTO))
+				&& btpSistema.getSisFlgImportacao().equals(
+						EnumSituacaoSimNao.SIM)) {
+			return true;
+		}
+		return false;
+	}
+
+	public void novo() throws Exception {
+		btpDemanda = new BtpDemanda();
+		btpDemanda.setBtpModulo(new BtpModulo());
+		btpDemanda.setDemCodStatus(EnumStatusDemanda.NAO_TESTADA);
+		btpDemanda.setBtpVersao(btpVersao);
+
+	}
+
+	public void importar() throws Exception {
+
+		Connection connection = null;
+		Integer qtd = 0;
+
+		try {
+
+			connection = new ConnectJDBC().createConnectionSGD();
+
+			String selectQuery = " SELECT MODD.MOD_DSC_MODULO , SOL.SOL_NUM_SOLICITACAO, SOL.SOL_DSC_PROBLEMA, SOL.SOL_TXT_SOLUCAO FROM SOL_SOLICITACAO SOL"
+					+ " inner join MOD_MODULO modd on SOL.MOD_COD_MODULO = MODD.MOD_COD_MODULO "
+					+ " INNER JOIN SOR_SOLICITACAO_RELEASE SOR ON SOL.SOR_COD_SOLICITACAO_RELEASE= SOR.SOR_COD_SOLICITACAO_RELEASE"
+					+ " WHERE SOR.SOR_NUM_BASELINE LIKE ? AND SOR.SIS_COD_SISTEMA=? "
+					+ " order by SOL_NUM_SOLICITACAO ";
+
+			PreparedStatement preparedStatement = connection
+					.prepareStatement(selectQuery);
+
+			preparedStatement.setString(1, "%" + btpVersao.getVerIdVersao()
+					+ "%");
+			preparedStatement.setLong(2, btpVersao.getBtpSistema()
+					.getSisCodSGD());
+
+			final ResultSet rs = preparedStatement.executeQuery();
+
+			List<BtpModulo> modulos = getLstModulos();
+
+			List<BtpDemanda> demandasCadastradas = srvDemanda.listar(btpVersao);
+			EnumSituacaoSimNao extra = EnumSituacaoSimNao.NAO;
+			if (demandasCadastradas.size() > 0) {
+				extra = EnumSituacaoSimNao.SIM;
+			}
+
+			while (rs.next()) {
+				BtpDemanda demanda = new BtpDemanda();
+				demanda.setBtpVersao(btpVersao);
+				demanda.setDemCodStatus(EnumStatusDemanda.NAO_TESTADA);
+				demanda.setDemCodTipoDemanda(EnumTipoDemanda.NOVA_IMPLEMENTACAO);
+				demanda.setDemDscDemanda(rs.getString(3));
+				demanda.setDemDscChamado(rs.getString(4));
+				demanda.setDemNumSGD(rs.getLong(2));
+				demanda.setDemFlgExibirChamado(EnumSituacaoSimNao.NAO);
+				demanda.setDemFlgExtra(extra);
+
+				for (BtpModulo modu : modulos) {
+					if (modu.getModDscModulo().equals(rs.getString(1))) {
+						demanda.setBtpModulo(modu);
+					}
+				}
+				try {
+					boolean inserir = true;
+					for (BtpDemanda demm : demandasCadastradas) {
+						if (demm.getDemNumSGD().equals(demanda.getDemNumSGD())) {
+							inserir = false;
+						}
+
+					}
+
+					if (inserir) {
+						srvDemanda.salvar(demanda);
+					}
+				} catch (Exception erro) {
+
+				}
+
+				qtd++;
+
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		connection.close();
+		;
+
+	}
+
+	public void selecionar() {
+		btpDemanda = demandas.getRowData();
+	}
+
+	public void abrirDemandas(BtpVersao btpVersao) {
+
+		this.btpVersao = btpVersao;
+
+	}
+
+	public DataModel<BtpDemanda> getDemandaList() {
+		if (this.btpVersao != null) {
+			listaDemandas = btpVersao.getLstDemandas();
+		} else {
+			listaDemandas = new ArrayList<BtpDemanda>();
+		}
+
+		demandas = new ListDataModel<BtpDemanda>(listaDemandas);
+
+		return demandas;
+	}
+
+	public List<BtpModulo> getLstModulos() {
+
+		return srvModulo.listar(btpSistema);
+	}
+
+	/**
+	 * INSERIR
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         26/10/2015 - 13:51:24.
+	 * @return
+	 * @throws Exception
+	 */
+	public String inserir() throws Exception {
+		String resultado = "falha";
+
+		BtpDemanda demanda = srvDemanda.salvar(btpDemanda);
+
+		boolean retorno = false;
+
+		if (demanda.getDemSeqDemanda() != null) {
+			retorno = true;
+
+			addMessage("OK", "Registro Inserido Com sucesso!!!");
+
+		}
+
+		if (retorno) {
+			resultado = "demandas";
+		}
+
+		btpDemanda = new BtpDemanda();
+
+		return resultado;
+	}
+
+	/**
+	 * ALTERAR
+	 * 
+	 * @author Evandro Custódio Gonçalves[evandro.custodio@cagece.com.br]
+	 *         26/10/2015 - 13:51:18.
+	 * @return
+	 * @throws Exception
+	 */
+	public void alterar() throws Exception {
+		srvDemanda.salvar(btpDemanda);
+
+		addMessage("OK", "Demanda atualizada com sucesso!!!");
+
+		btpDemanda = new BtpDemanda();
+	}
+
+	public void gerarDataExecucao() {
+		if ((btpDemanda != null)
+				&& (btpDemanda.getDemDataExecucao() == null)
+				&& (!btpDemanda.getDemCodStatus().equals(
+						EnumStatusDemanda.NAO_TESTADA))) {
+			btpDemanda.setDemDataExecucao(new Date());
+		}
+	}
+
+	public void addMessage(String summary, String detail) {
+		FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO,
+				summary, detail);
+		FacesContext.getCurrentInstance().addMessage(null, message);
+
+	}
+
+	public void excluir() throws Exception {
+		listaDemandas.remove(btpDemanda);
+
+		srvDemanda.excluir(btpDemanda);
+
+		btpDemanda = new BtpDemanda();
+
+		addMessage("OK", "Registro Excluido com sucesso!!!");
+
+	}
+
+	public void excluirInstrucaoSQL() throws Exception {
+
+		srvInstrucao.excluir(btpInstrucaoSQL);
+
+	}
+
+	public String getResumoDemandasTipo() {
+		Integer bug = 0;
+		Integer nova = 0;
+		Integer correcao = 0;
+		Integer peformance = 0;
+		Integer design = 0;
+
+		for (BtpDemanda dem : getDemandaList()) {
+			switch (dem.getDemCodTipoDemanda()) {
+			case BUG:
+				bug++;
+				break;
+
+			case CORRECAO_ESPECIFICA:
+				correcao++;
+				break;
+
+			case MELHORIA_PEFORMANCE:
+				peformance++;
+				break;
+
+			case NOVA_IMPLEMENTACAO:
+				nova++;
+				break;
+
+			case MELHORIA_DESIGN:
+				design++;
+
+				break;
+
+			}
+
+		}
+
+		Double total = (bug.doubleValue() + nova.doubleValue()
+				+ correcao.doubleValue() + peformance.doubleValue() + design
+				.doubleValue());
+		if (total == 0.00D) {
+			total = 1D;
+		}
+		Double percBug = (bug.doubleValue() / total);
+		Double percCorrecao = (correcao.doubleValue() / total);
+		Double percPeformance = (peformance.doubleValue() / total);
+		Double percNova = (nova.doubleValue() / total);
+		Double percDesign = (design.doubleValue() / total);
+
+		StringBuilder texto = new StringBuilder();
+
+		texto.append(String.format("%03d", nova) + " ["
+				+ NumberFormat.getPercentInstance().format(percNova)
+				+ "] NOVAS IMPLEMENTAÇÕES<br/>");
+
+		texto.append(String.format("%03d", correcao) + " ["
+				+ NumberFormat.getPercentInstance().format(percCorrecao)
+				+ "] CORREÇÕES ESPECÍFICAS<br/>");
+
+		texto.append(String.format("%03d", peformance) + " ["
+				+ NumberFormat.getPercentInstance().format(percPeformance)
+				+ "] MELHORIA DE PEFORMANCE<br/>");
+
+		texto.append(String.format("%03d", design) + " ["
+				+ NumberFormat.getPercentInstance().format(percDesign)
+				+ "] MELHORIA DE DESIGN<br/>");
+
+		texto.append(String.format("%03d", bug) + " ["
+				+ NumberFormat.getPercentInstance().format(percBug)
+				+ "] CORREÇÕES DE BUGS<br/>");
+
+		return texto.toString();
+	}
+
+	public String getResumoDemandas() {
+		Integer executadas = 0;
+		Integer reprovadas = 0;
+		Integer bloqueadas = 0;
+		Integer aprovadas = 0;
+		Integer ignoradas = 0;
+		Integer naoExecutadas = 0;
+
+		for (BtpDemanda dem : getDemandaList()) {
+			switch (dem.getDemCodStatus()) {
+			case PASSOU:
+				aprovadas++;
+				break;
+			case FALHOU:
+				reprovadas++;
+				break;
+			case IGNORADA:
+				ignoradas++;
+
+			case BLOQUEADA:
+				bloqueadas++;
+				break;
+			case NAO_TESTADA:
+				naoExecutadas++;
+				break;
+			}
+
+		}
+
+		executadas = aprovadas + reprovadas + ignoradas;
+
+		Double total = (aprovadas.doubleValue() + reprovadas.doubleValue()
+				+ ignoradas.doubleValue() + bloqueadas.doubleValue() + naoExecutadas
+				.doubleValue());
+		if (total == 0) {
+			total = 1D;
+		}
+		Double percAprovadas = (aprovadas.doubleValue() / total);
+		Double percReprovadas = (reprovadas.doubleValue() / total);
+		Double percIgnoradas = (ignoradas.doubleValue() / total);
+		Double percBloqeadas = (bloqueadas.doubleValue() / total);
+		Double percNaoExecutadas = (naoExecutadas.doubleValue() / total);
+
+		StringBuilder texto = new StringBuilder();
+
+		texto.append(String.format("%03d", executadas + naoExecutadas
+				+ bloqueadas)
+				+ " [100%]  SGDS<br/>");
+
+		texto.append(String.format("%03d", aprovadas) + " ["
+				+ NumberFormat.getPercentInstance().format(percAprovadas)
+				+ "] OK<br/>");
+
+		texto.append(String.format("%03d", reprovadas) + " ["
+				+ NumberFormat.getPercentInstance().format(percReprovadas)
+				+ "] FALHAS<br/>");
+
+		texto.append(String.format("%03d", ignoradas) + " ["
+				+ NumberFormat.getPercentInstance().format(percIgnoradas)
+				+ "] IGNORADAS<br/>");
+
+		texto.append(String.format("%03d", bloqueadas) + " ["
+				+ NumberFormat.getPercentInstance().format(percBloqeadas)
+				+ "] BLOQUEADAS<br/>");
+
+		texto.append(String.format("%03d", naoExecutadas) + " ["
+				+ NumberFormat.getPercentInstance().format(percNaoExecutadas)
+				+ "] NÃO TESTADAS");
+
+		return texto.toString();
+	}
+
+	public String getResumoTipoDemandas() {
+		Integer normal = 0;
+		Integer extras = 0;
+
+		for (BtpDemanda dem : getDemandaList()) {
+			switch (dem.getDemFlgExtra()) {
+			case SIM:
+				extras++;
+				break;
+			case NAO:
+				normal++;
+				break;
+			}
+
+		}
+
+		Double total = (normal.doubleValue() + extras.doubleValue());
+		if (total == 0) {
+			total = 1D;
+		}
+		Double percNormal = (normal.doubleValue() / total);
+		Double percExtras = (extras.doubleValue() / total);
+
+		StringBuilder texto = new StringBuilder();
+
+		texto.append(String.format("%03d", normal) + " ["
+				+ NumberFormat.getPercentInstance().format(percNormal)
+				+ "]  PLANEJADAS <br/>");
+		texto.append(String.format("%03d", extras) + " ["
+				+ NumberFormat.getPercentInstance().format(percExtras)
+				+ "] ADICIONADAS <br/>");
+
+		return texto.toString();
+	}
+
+	public Collection<EnumStatusDemanda> getLstStatusDemanda() {
+		return Arrays.asList(EnumStatusDemanda.values());
+	}
+
+	public Collection<EnumTipoDemanda> getLstTipoDemanda() {
+		return Arrays.asList(EnumTipoDemanda.values());
+	}
+
+	public Collection<EnumSituacaoSimNao> getLstSituacao() {
+		return Arrays.asList(EnumSituacaoSimNao.values());
+	}
+
+	public List<BtpSistema> getLstSistemas() {
+		return srvSistema.listar();
+	}
+
+	public DemandaRemote getSrvDemanda() {
+		return srvDemanda;
+	}
+
+	public void setSrvDemanda(DemandaRemote srvDemanda) {
+		this.srvDemanda = srvDemanda;
+	}
+
+	public List<BtpDemanda> getListaDemandas() {
+		return listaDemandas;
+	}
+
+	public List<BtpDemanda> getDemandasFiltradas() {
+		return demandasFiltradas;
+	}
+
+	public void setDemandasFiltradas(List<BtpDemanda> demandasFiltradas) {
+		this.demandasFiltradas = demandasFiltradas;
+	}
+
+	public DataModel<BtpDemanda> getDemandas() {
+		return demandas;
+	}
+
+	public void setDemandas(DataModel<BtpDemanda> demandas) {
+		this.demandas = demandas;
+	}
+
+	public BtpDemanda getBtpDemanda() {
+		return btpDemanda;
+	}
+
+	public void setBtpDemanda(BtpDemanda btpDemanda) {
+		this.btpDemanda = btpDemanda;
+	}
+
+	public Collection<BtpVersao> getLstVersoes() {
+		if (btpSistema == null) {
+			return null;
+		}
+		return srvVersao.listar(btpSistema, null);
+	}
+
+	public void setListaDemandas(List<BtpDemanda> listaDemandas) {
+		this.listaDemandas = listaDemandas;
+	}
+
+	public BtpVersao getBtpVersao() {
+		return btpVersao;
+	}
+
+	public void setBtpVersao(BtpVersao btpVersao) {
+		this.btpVersao = btpVersao;
+	}
+
+	public BtpInstrucaoSql getBtpInstrucaoSQL() {
+		return btpInstrucaoSQL;
+	}
+
+	public void setBtpInstrucaoSQL(BtpInstrucaoSql btpInstrucaoSQL) {
+		this.btpInstrucaoSQL = btpInstrucaoSQL;
+	}
+
+	public BtpSistema getBtpSistema() {
+		return btpSistema;
+	}
+
+	public void setBtpSistema(BtpSistema btpSistema) {
+		this.btpSistema = btpSistema;
+	}
+}
